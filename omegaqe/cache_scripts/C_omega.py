@@ -9,7 +9,7 @@ def main():
     Lmax = 5000
     ells = np.geomspace(1, Lmax, 500)
     sep = getFileSep()
-    C_omega = pb.omega_ps(ells, Nell_prim=4000, Ntheta=2000, M_path=f"{omegaqe.CACHE_DIR}/_M_new")
+    C_omega = pb.omega_ps(ells, Nell_prim=4000, Ntheta=2000, zmax=1100)
     C_omega_spline = InterpolatedUnivariateSpline(ells, C_omega)
     C_omega_final = np.zeros(Lmax + 1)
     C_omega_final[1:] = C_omega_spline(np.arange(1,Lmax + 1))
