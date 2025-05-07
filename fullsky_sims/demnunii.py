@@ -1,3 +1,4 @@
+from pathlib import Path
 from omegaqe.tools import getFileSep
 from omegaqe.cosmology import Cosmology
 from omegaqe.powerspectra import Powerspectra
@@ -9,14 +10,17 @@ import re
 from fullsky_sims.spherical import Spherical
 from scipy.interpolate import RectBivariateSpline, InterpolatedUnivariateSpline
 from scipy import signal
+import fullsky_sims
+import omegaqe
 
 class Demnunii:
 
     def __init__(self, nthreads=1):
-        self.data_dir = "/mnt/lustre/users/astro/mr671/DEMNUnii/LCDM/"
-        self.cache_dir = f"/mnt/lustre/users/astro/mr671/omegaQE/fullsky_sims/cache/"
-        self.sims_dir = f"/mnt/lustre/users/astro/mr671/len_cmbs/sims3/"
-        self.omegaqe_data = f"/mnt/lustre/users/astro/mr671/omegaQE/fullsky_sims/data/"
+        self.data_dir = str(fullsky_sims.DEMNUNII_DIR / "LCDM")
+        self.cache_dir = fullsky_sims.ROOT_DIR / "cache"
+
+        self.sims_dir = Path(omegaqe.DATA_DIR) / "len_cmbs" / "sims3"
+        self.omegaqe_data = omegaqe.DATA_DIR
         self.config = self.setup_config()
         self.nside = int(self.parse_config(self.get_config("HealpixNside")))
         self.Lmax_map = 5000

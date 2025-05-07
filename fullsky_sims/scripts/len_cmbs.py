@@ -1,6 +1,6 @@
 from omegaqe.tools import getFileSep, parse_boolean
 import fullsky_sims
-from plancklens.sims import cmbs, phas
+from lenspyx.utils_hp import synalm
 import numpy as np
 import sys
 import os
@@ -91,9 +91,12 @@ def get_lensed_cmb_ps():
 
 def get_unlensed_alms(unl_cmb_spectra, sim, unl_loc):
     if unl_loc is None:
-        lib_pha = phas.lib_phas(os.path.join(os.environ['PLENS'], 'len_cmbs', 'phas'), 3, LMAX_MAP)
-        unl_lib = cmbs.sims_cmb_unl(unl_cmb_spectra, lib_pha)
-        return unl_lib.get_sim_tlm(sim), unl_lib.get_sim_elm(sim), unl_lib.get_sim_blm(sim)
+        # lib_pha = phas.lib_phas(os.path.join(os.environ['PLENS'], 'len_cmbs', 'phas'), 3, LMAX_MAP)
+        # unl_lib = cmbs.sims_cmb_unl(unl_cmb_spectra, lib_pha)
+        tlm_unl = synalm(unl_cmb_spectra['tt'], lmax=LMAX_MAP, mmax=LMAX_MAP)
+        elm_unl = synalm(unl_cmb_spectra['ee'], lmax=LMAX_MAP, mmax=LMAX_MAP)
+        blm_unl = synalm(unl_cmb_spectra['bb'], lmax=LMAX_MAP, mmax=LMAX_MAP)
+        return tlm_unl, elm_unl, blm_unl
     TQU = wrapper.sht.read_map(f"{unl_loc}{sep}TQU_{sim}.fits")
     T_unl = wrapper.sht.map2alm(TQU[0])
     E_unl, B_unl = wrapper.sht.map2alm_spin(TQU[1:], 2)
