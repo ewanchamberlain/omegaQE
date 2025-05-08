@@ -123,11 +123,12 @@ def save_lens_maps(loc, len_maps, sim):
 
 def _save_omega_diff(loc, clm, nthreads, sim=None):
     directory = f"{loc}"
+    extra = "" if sim is None else f"_{sim}"
+    filename = f"{directory}{sep}omega_diff{extra}.fits"
     if not os.path.isdir(directory):
         os.makedirs(directory)
     olm = wrapper.sht.almxfl(clm, _inv_lensing_fac())
     omega_map = wrapper.sht.alm2map(olm, lmax=LMAX_MAP, nthreads=nthreads)
-    extra = "" if sim is None else f"_{sim}"
     wrapper.sht.write_map(f"{directory}{sep}omega_diff{extra}.fits", omega_map)
 
 
@@ -158,11 +159,14 @@ def _save_unl_cmbs(loc, alms, sim, nthreads):
 
 def main(nsims, nthreads, loc, nbody, use_cache_diff, unl_loc):
     global wrapper
+    print("Creating wrapper...")
     wrapper = fullsky_sims.wrapper_class(nbody, nthreads)
     cache_diff_loc = loc if use_cache_diff else None
+    print("Getting glms...")
     glm_pb = get_glm(nthreads, "pb")
     # glm_dem = get_glm(nthreads, "dem")
     # glm_diff = get_glm(nthreads, "diff", cache_diff_loc)
+    print("Getting clms...")
     clm_dem = get_clm(nthreads, "dem")
     # clm_diff = get_clm(nthreads, "diff", cache_diff_loc)
 
@@ -172,9 +176,13 @@ def main(nsims, nthreads, loc, nbody, use_cache_diff, unl_loc):
     #                    "diff_zero": (glm_diff, np.zeros(np.size(glm_diff))),
     #                    "zero_dem":(np.zeros(np.size(glm_diff)), clm_dem)
     #                    }
+    print("Getting unlensed cmb ps...")
     unl_cmb_spectra = get_unlensed_cmb_ps()
+    print("Starting sims")
     for sim in range(nsims):
+        print(f"Sim {sim}:")
         glm_diff = get_glm(nthreads, "diff", cache_diff_loc)
+        clm_diff = get_clm(nthreads, "diff", cache_diff_loc)
         deflect_configs = {"pbdem_zero3": (glm_pb, np.zeros(np.size(glm_pb))),
                            "diff_zero3": (glm_diff, np.zeros(np.size(glm_diff))),
                             "pbdem_dem3": (glm_pb, clm_dem)
@@ -190,7 +198,7 @@ def main(nsims, nthreads, loc, nbody, use_cache_diff, unl_loc):
             len_maps = get_lensed_maps(dlm, unl_alms, nthreads)
             save_lens_maps(outdir, len_maps, sim)
 
-    # _save_kappa_diff(loc, glm_diff, nthreads)
+    _save_kappa_diff(loc, glm_diff, nthreads)
     _save_omega_diff(loc, clm_diff, nthreads)
 
 
@@ -205,4 +213,11 @@ if __name__ == '__main__':
     nbody = str(args[3])
     use_cache_diff = parse_boolean(args[4])
     unl_loc = str(args[5]) if len(args)==6 else None
+    print("Setup:")
+    print(f"\t nsims: {nsims}")
+    print(f"\t nthreads: {nthreads}")
+    print(f"\t loc: {loc}")
+    print(f"\t nbody: {nbody}")
+    print(f"\t use_cache_diff: {use_cache_diff}")
+    print(f"\t unl_loc: {unl_loc}")
     main(nsims, nthreads, loc, nbody, use_cache_diff, unl_loc)

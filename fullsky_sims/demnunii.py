@@ -41,9 +41,8 @@ class Demnunii:
         return config
 
     def get_snap_info(self):
-        sep = getFileSep()
         snap_info_file = "cosmoint_results_from_lcdm.txt"
-        return pd.read_csv(self.data_dir+sep+snap_info_file, delim_whitespace=True)
+        return pd.read_csv(Path(self.data_dir)/snap_info_file, sep=r"\s+")
 
     def get_config(self, name):
         return self.config.get("header", name)
