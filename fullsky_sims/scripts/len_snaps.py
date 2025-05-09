@@ -55,7 +55,7 @@ if __name__ == '__main__':
         raise ValueError(
             "Arguments should be nthreads, (optional: is_verbose)")
     nthreads = int(args[0])
-    is_verbose = bool(args[1]) if len(args) == 2 else None
+    is_verbose = bool(args[1]) if len(args) == 2 else False
     if is_verbose:
         print(f"Running with {nthreads} threads.")
-    main(nthreads)
+    main(nthreads, verbose=is_verbose)
