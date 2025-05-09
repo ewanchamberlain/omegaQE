@@ -20,9 +20,9 @@ def _lensing_fac():
     return fac
 
 
-def get_glm(nthreads, snap):
+def get_glm(nthreads, snap, is_verbose=False):
     lensing_fac = _lensing_fac()
-    gal_kappa_map = dm.get_gal_kappa_map(snap)
+    gal_kappa_map = dm.get_gal_kappa_map(snap, verbose=True)
     klm = dm.sht.map2alm(gal_kappa_map, lmax=LMAX_MAP, nthreads=nthreads)
     return dm.sht.almxfl(klm, lensing_fac)
 
@@ -39,10 +39,10 @@ def save_lens_maps(len_map, snap):
     dm.sht.write_map(f"{directory}{sep}len_snap_{snap_num_app}{snap}.fits", len_map)
 
 
-def main(nthreads):
+def main(nthreads, is_verbose=False):
     for snap in np.arange(63):
         
-        glm_snap = get_glm(nthreads, snap)
+        glm_snap = get_glm(nthreads, snap, is_verbose)
         unl_snap = dm.get_particle_snap(snap)
         unl_alm = dm.sht.map2alm(unl_snap, lmax=LMAX_MAP, nthreads=nthreads)
         len_map = get_lensed_map(glm_snap, unl_alm, nthreads)
@@ -51,8 +51,9 @@ def main(nthreads):
 
 if __name__ == '__main__':
     args = sys.argv[1:]
-    if len(args) != 1:
+    if len(args) not in (1, 2):
         raise ValueError(
-            "Arguments should be nthreads")
+            "Arguments should be nthreads, (optional: is_verbose)")
     nthreads = int(args[0])
+    is_verbose = bool(args[1]) if len(args) == 2 else None
     main(nthreads)
