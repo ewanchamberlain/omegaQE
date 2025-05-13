@@ -3,7 +3,6 @@ import omegaqe
 from omegaqe.bispectra import Bispectra
 from omegaqe.covariance import Covariance
 import omegaqe.postborn as pb
-from numpy.exceptions import VisibleDeprecationWarning
 from scipy.interpolate import InterpolatedUnivariateSpline
 from omegaqe.tools import getFileSep, path_exists
 from copy import deepcopy
@@ -12,7 +11,6 @@ import warnings
 import vector
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
-warnings.filterwarnings("ignore", category=VisibleDeprecationWarning)
 
 
 class Fisher:
