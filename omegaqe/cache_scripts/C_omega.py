@@ -12,10 +12,10 @@ def main():
     C_omega = pb.omega_ps(ells, Nell_prim=4000, Ntheta=2000, zmax=1100)
     C_omega_spline = InterpolatedUnivariateSpline(ells, C_omega)
     C_omega_final = np.zeros(Lmax + 1)
-    C_omega_final[1:] = C_omega_spline(np.arange(1,Lmax + 1))
+    C_omega_final[1:] = C_omega_spline(np.arange(1, Lmax + 1))
     np.save(f"{omegaqe.CACHE_DIR}{sep}_C_omega{sep}C_omega_new.npy", C_omega_final)
-    np.save(f"{omegaqe.CACHE_DIR}{sep}_C_omega{sep}Ls_new.npy", np.arange(Lmax+1))
+    np.save(f"{omegaqe.CACHE_DIR}{sep}_C_omega{sep}Ls_new.npy", np.arange(Lmax + 1))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

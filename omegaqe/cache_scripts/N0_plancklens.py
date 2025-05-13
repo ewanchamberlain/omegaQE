@@ -9,6 +9,7 @@ cache_dir = omegaqe.CACHE_DIR
 data_dir = omegaqe.DATA_DIR
 sep = tools.getFileSep()
 
+
 def save(N0, fields, gmv, resp_ps, exp, T_Lmin, T_Lmax, P_Lmin, P_Lmax):
     if gmv:
         gmv_str = "gmv"
@@ -19,6 +20,7 @@ def save(N0, fields, gmv, resp_ps, exp, T_Lmin, T_Lmax, P_Lmin, P_Lmax):
     print(f"Saving {filename_N0} at {folder}")
     tools.save_array(folder, filename_N0, N0)
 
+
 def main(exp, T_Lmin, T_Lmax, P_Lmin, P_Lmax):
     noise = Noise()
     Tcmb = 2.7255
@@ -26,16 +28,72 @@ def main(exp, T_Lmin, T_Lmax, P_Lmin, P_Lmax):
     indices = ["TT", "EE", "BB"]
     arc_to_rad = np.pi / 180 / 60
     if exp == "S4_dp":
-        noise_cls = {idx.lower(): np.sqrt(noise.get_cmb_gaussian_N(idx.upper(), 0.4, 2.3,  ellmax=5000)) / arc_to_rad * np.sqrt(fac) for idx in indices}
+        noise_cls = {
+            idx.lower(): np.sqrt(
+                noise.get_cmb_gaussian_N(idx.upper(), 0.4, 2.3, ellmax=5000)
+            )
+            / arc_to_rad
+            * np.sqrt(fac)
+            for idx in indices
+        }
     else:
-        noise_cls = {idx.lower(): np.sqrt(noise.get_cmb_gaussian_N(idx.upper(), None, None, ellmax=5000, exp=exp)) / arc_to_rad * np.sqrt(fac) for idx in indices}
+        noise_cls = {
+            idx.lower(): np.sqrt(
+                noise.get_cmb_gaussian_N(idx.upper(), None, None, ellmax=5000, exp=exp)
+            )
+            / arc_to_rad
+            * np.sqrt(fac)
+            for idx in indices
+        }
     indices = ["TT", "EE", "TE", "TB", "EB", "BB"]
     len_cls = {idx.lower(): fac * noise.cosmo.get_lens_ps(idx) for idx in indices}
     grad_cls = {idx.lower(): fac * noise.cosmo.get_grad_lens_ps(idx) for idx in indices}
-    N0_dict = get_N0(0, noise_cls["tt"], noise_cls["ee"],{'t': T_Lmax, 'e': P_Lmax, 'b': P_Lmax}, T_Lmin, 5000, len_cls, grad_cls, grad_cls, len_cls, joint_TP=True)
-    save((N0_dict[0]['p'][2:], N0_dict[1]['p'][2:]), "TEB", True, "gradient", exp, T_Lmin, T_Lmax, P_Lmin, P_Lmax)
-    save((N0_dict[0]['p_p'][2:], N0_dict[1]['p_p'][2:]), "EB", True, "gradient", exp, T_Lmin, T_Lmax, P_Lmin, P_Lmax)
-    save((N0_dict[0]['ptt'][2:], N0_dict[1]['ptt'][2:]), "TT", False, "gradient", exp, T_Lmin, T_Lmax, P_Lmin, P_Lmax)
+    N0_dict = get_N0(
+        0,
+        noise_cls["tt"],
+        noise_cls["ee"],
+        {"t": T_Lmax, "e": P_Lmax, "b": P_Lmax},
+        T_Lmin,
+        5000,
+        len_cls,
+        grad_cls,
+        grad_cls,
+        len_cls,
+        joint_TP=True,
+    )
+    save(
+        (N0_dict[0]["p"][2:], N0_dict[1]["p"][2:]),
+        "TEB",
+        True,
+        "gradient",
+        exp,
+        T_Lmin,
+        T_Lmax,
+        P_Lmin,
+        P_Lmax,
+    )
+    save(
+        (N0_dict[0]["p_p"][2:], N0_dict[1]["p_p"][2:]),
+        "EB",
+        True,
+        "gradient",
+        exp,
+        T_Lmin,
+        T_Lmax,
+        P_Lmin,
+        P_Lmax,
+    )
+    save(
+        (N0_dict[0]["ptt"][2:], N0_dict[1]["ptt"][2:]),
+        "TT",
+        False,
+        "gradient",
+        exp,
+        T_Lmin,
+        T_Lmax,
+        P_Lmin,
+        P_Lmax,
+    )
 
 
 if __name__ == "__main__":

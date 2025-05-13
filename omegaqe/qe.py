@@ -8,16 +8,23 @@ import vector
 
 
 class QE:
-
     class CMBsplines:
-
         def __init__(self):
             self.initialised = False
             self.lenCl_spline = None
             self.gradCl_spline = None
             self.N_spline = None
 
-    def __init__(self, exp, deltaT=None, beam=None, init=True, fields="TEB", L_cuts=(None,None,None,None), data_dir=omegaqe.DATA_DIR):
+    def __init__(
+        self,
+        exp,
+        deltaT=None,
+        beam=None,
+        init=True,
+        fields="TEB",
+        L_cuts=(None, None, None, None),
+        data_dir=omegaqe.DATA_DIR,
+    ):
         self._noise = Noise()
         self.cosmo = self._noise.cosmo
         self.cmb = dict.fromkeys(self._cmb_types(), self.CMBsplines())
@@ -32,7 +39,6 @@ class QE:
         self.T_Lmax = L_cuts[1]
         self.P_Lmin = L_cuts[2]
         self.P_Lmax = L_cuts[3]
-
 
     def _cmb_types(self):
         types = np.char.array(list("TEB"))
@@ -49,7 +55,7 @@ class QE:
         typs_matrix = typs[:, None] + typs[None, :]
         if unique:
             XYs = np.triu(typs_matrix).flatten()
-            XYs = XYs[XYs != '']
+            XYs = XYs[XYs != ""]
         else:
             XYs = typs_matrix.flatten()
         if includeBB:
@@ -63,7 +69,7 @@ class QE:
     def get_log_sample_Ls(self, Lmin, Lmax, Nells=500, dL_small=1):
         floaty = Lmax / 1000
         samp1 = np.arange(Lmin, floaty * 10, dL_small)
-        samp2 = np.logspace(1, 3, Nells-np.size(samp1)) * floaty
+        samp2 = np.logspace(1, 3, Nells - np.size(samp1)) * floaty
         return np.concatenate((samp1, samp2))
 
     def get_Lmin_Lmax(self, fields, gmv, strict=True):
@@ -86,7 +92,17 @@ class QE:
         w2[L2 > Lmax] = 0
         return w1, w2
 
-    def gmv_normalisation(self, Ls, curl, fields="TEB", resp_ps="gradient", T_Lmin=30, T_Lmax=3000, P_Lmin=30, P_Lmax=5000):
+    def gmv_normalisation(
+        self,
+        Ls,
+        curl,
+        fields="TEB",
+        resp_ps="gradient",
+        T_Lmin=30,
+        T_Lmax=3000,
+        P_Lmin=30,
+        P_Lmax=5000,
+    ):
         """
         Parameters
         ----------
@@ -109,7 +125,7 @@ class QE:
         N_Ls = np.size(Ls)
         A = np.zeros(N_Ls)
         if N_Ls == 1:
-            Ls = np.ones(1)*Ls
+            Ls = np.ones(1) * Ls
         for iii, L in enumerate(Ls):
             L_vec = vector.obj(rho=L, phi=0)
             for jjj, ell in enumerate(ells):
@@ -120,13 +136,29 @@ class QE:
                 for XY in XYs:
                     w = np.ones(np.size(Ls3))
                     resp = self.response(XY, L_vec, ell_vec, curl, resp_ps)
-                    g = self.gmv_weight_function(XY, L_vec, ell_vec, curl, fields, resp_ps, apply_Lcuts=True)
+                    g = self.gmv_weight_function(
+                        XY, L_vec, ell_vec, curl, fields, resp_ps, apply_Lcuts=True
+                    )
                     I2 += w * resp * g
-                I1[jjj] = 2 * ell * InterpolatedUnivariateSpline(thetas, I2).integral(0, np.pi)
-            A[iii] = InterpolatedUnivariateSpline(ells, I1).integral(Lmin, Lmax) / ((2 * np.pi) ** 2)
+                I1[jjj] = (
+                    2 * ell * InterpolatedUnivariateSpline(thetas, I2).integral(0, np.pi)
+                )
+            A[iii] = InterpolatedUnivariateSpline(ells, I1).integral(Lmin, Lmax) / (
+                (2 * np.pi) ** 2
+            )
         return 1 / A
 
-    def normalisation(self, typ, Ls, curl, resp_ps="gradient", T_Lmin=30, T_Lmax=3000, P_Lmin=30, P_Lmax=5000):
+    def normalisation(
+        self,
+        typ,
+        Ls,
+        curl,
+        resp_ps="gradient",
+        T_Lmin=30,
+        T_Lmax=3000,
+        P_Lmin=30,
+        P_Lmax=5000,
+    ):
         """
         Parameters
         ----------
@@ -137,7 +169,15 @@ class QE:
         -------
         """
         if typ == "gmv":
-            return self.gmv_normalisation(Ls, curl, resp_ps=resp_ps, T_Lmin=T_Lmin, T_Lmax=T_Lmax, P_Lmin=P_Lmin, P_Lmax=P_Lmax)
+            return self.gmv_normalisation(
+                Ls,
+                curl,
+                resp_ps=resp_ps,
+                T_Lmin=T_Lmin,
+                T_Lmax=T_Lmax,
+                P_Lmin=P_Lmin,
+                P_Lmax=P_Lmax,
+            )
         self._initialisation_check()
         self.T_Lmin = T_Lmin
         self.T_Lmax = T_Lmax
@@ -157,13 +197,34 @@ class QE:
             for jjj, ell in enumerate(ells):
                 ell_vec = vector.obj(rho=ell, phi=thetas)
                 resp = self.response(typ, L_vec, ell_vec, curl, resp_ps)
-                g = self.weight_function(typ, L_vec, ell_vec, curl, gmv=False, resp_ps=resp_ps, apply_Lcuts=True)
+                g = self.weight_function(
+                    typ,
+                    L_vec,
+                    ell_vec,
+                    curl,
+                    gmv=False,
+                    resp_ps=resp_ps,
+                    apply_Lcuts=True,
+                )
                 I2 = g * resp
-                I1[jjj] = 2 * ell * InterpolatedUnivariateSpline(thetas, I2).integral(0, np.pi)
-            A[iii] = InterpolatedUnivariateSpline(ells, I1).integral(Lmin, Lmax) / ((2 * np.pi) ** 2)
+                I1[jjj] = (
+                    2 * ell * InterpolatedUnivariateSpline(thetas, I2).integral(0, np.pi)
+                )
+            A[iii] = InterpolatedUnivariateSpline(ells, I1).integral(Lmin, Lmax) / (
+                (2 * np.pi) ** 2
+            )
         return 1 / A
 
-    def gmv_weight_function(self, typ, L_vec, ell_vec, curl, fields="TEB", resp_ps="gradient", apply_Lcuts=False):
+    def gmv_weight_function(
+        self,
+        typ,
+        L_vec,
+        ell_vec,
+        curl,
+        fields="TEB",
+        resp_ps="gradient",
+        apply_Lcuts=False,
+    ):
         """
         Parameters
         ----------
@@ -187,15 +248,26 @@ class QE:
             j = ij[1]
             C_inv_ip = self._get_cmb_Cov_inv_spline(i + p, fields)(ell)
             C_inv_jq = self._get_cmb_Cov_inv_spline(j + q, fields)(L3)
-            weight_tmp = self.response(i + j, L_vec, ell_vec, curl, resp_ps) * C_inv_ip * C_inv_jq
+            weight_tmp = (
+                self.response(i + j, L_vec, ell_vec, curl, resp_ps) * C_inv_ip * C_inv_jq
+            )
             if apply_Lcuts:
                 w1, w2 = self._get_L_cut_weights(typ, ell, L3)
                 weight_tmp *= w1 * w2
             weight += weight_tmp
         return weight / 2
 
-
-    def weight_function(self, typ, L_vec, ell_vec, curl, gmv=False, fields="TEB", resp_ps="gradient", apply_Lcuts=False):
+    def weight_function(
+        self,
+        typ,
+        L_vec,
+        ell_vec,
+        curl,
+        gmv=False,
+        fields="TEB",
+        resp_ps="gradient",
+        apply_Lcuts=False,
+    ):
         """
         Parameters
         ----------
@@ -209,23 +281,33 @@ class QE:
         """
         # TODO: all weight funcs (except TT) are possibly wrong
         if gmv:
-            return self.gmv_weight_function(typ, L_vec, ell_vec, curl, fields, resp_ps, apply_Lcuts=apply_Lcuts)
+            return self.gmv_weight_function(
+                typ, L_vec, ell_vec, curl, fields, resp_ps, apply_Lcuts=apply_Lcuts
+            )
         self._initialisation_check()
         ell = ell_vec.rho
         L3_vec = L_vec - ell_vec
         L3 = L3_vec.rho
-        typ1 = typ[0]+typ[0]
-        typ2 = typ[1]+typ[1]
+        typ1 = typ[0] + typ[0]
+        typ2 = typ[1] + typ[1]
         C_typ1 = self._get_cmb_cov(typ1, ell)
         C_typ2 = self._get_cmb_cov(typ2, L3)
         fac = 0.5 if typ1 == typ2 else 1
         if apply_Lcuts:
             w1, w2 = self._get_L_cut_weights(typ, ell, L3)
-            return w1*w2*fac*self.response(typ, L_vec, ell_vec, curl, resp_ps)/(C_typ1 * C_typ2)
-        return fac*self.response(typ, L_vec, ell_vec, curl, resp_ps)/(C_typ1 * C_typ2)
+            return (
+                w1
+                * w2
+                * fac
+                * self.response(typ, L_vec, ell_vec, curl, resp_ps)
+                / (C_typ1 * C_typ2)
+            )
+        return fac * self.response(typ, L_vec, ell_vec, curl, resp_ps) / (C_typ1 * C_typ2)
 
     def _response_phi(self, typ1, typ2, L_vec, ell_vec, L3_vec, h1, h2, cl="gradient"):
-        return ((L_vec @ ell_vec) * h1 * self._get_cmb_cl(ell_vec.rho, typ1, cl)) + ((L_vec @ L3_vec) * h2 * self._get_cmb_cl(L3_vec.rho, typ2, cl))
+        return ((L_vec @ ell_vec) * h1 * self._get_cmb_cl(ell_vec.rho, typ1, cl)) + (
+            (L_vec @ L3_vec) * h2 * self._get_cmb_cl(L3_vec.rho, typ2, cl)
+        )
 
     def response(self, typ, L_vec, ell_vec, curl=True, cl="gradient"):
         """
@@ -259,7 +341,12 @@ class QE:
             return self._response_phi(typ1, typ2, L_vec, ell_vec, L3_vec, h1, h2, cl)
         # return L * ell * np.sin(ell_vec.deltaphi(L_vec)) * (h1 * self._get_cmb_cl(ell, typ1, cl) - h2 * self._get_cmb_cl(L3, typ2, cl))
         # Correcting 2D cross product def, should be L1xL2=|L1||L2|sin(theta21)
-        return L * ell * np.sin(L_vec.deltaphi(ell_vec)) * (h1 * self._get_cmb_cl(ell, typ1, cl) - h2 * self._get_cmb_cl(L3, typ2, cl))
+        return (
+            L
+            * ell
+            * np.sin(L_vec.deltaphi(ell_vec))
+            * (h1 * self._get_cmb_cl(ell, typ1, cl) - h2 * self._get_cmb_cl(L3, typ2, cl))
+        )
 
     def geo_fac(self, typ, theta12):
         """
@@ -282,10 +369,10 @@ class QE:
         return np.ones(shape)
 
     def _geo_fac_E(self, theta12):
-        return np.cos(2*(theta12))
+        return np.cos(2 * (theta12))
 
     def _geo_fac_B(self, theta12):
-        return np.sin(2*(theta12))
+        return np.sin(2 * (theta12))
 
     def _get_response_geo_fac(self, typ, num, theta12):
         shape = np.shape(theta12)
@@ -336,13 +423,14 @@ class QE:
         self._cov_inv_fields = fields
         N_fields = len(self._cov_inv_fields)
         Ls, C_inv = self._cmb_Cov_inv(fields)
-        C_inv_splines = np.empty((N_fields,N_fields), dtype=InterpolatedUnivariateSpline)
+        C_inv_splines = np.empty((N_fields, N_fields), dtype=InterpolatedUnivariateSpline)
         for iii in range(N_fields):
             for jjj in range(N_fields):
-                C_inv_ij = C_inv[iii,jjj]
-                C_inv_splines[iii, jjj] = InterpolatedUnivariateSpline(Ls[2:], C_inv_ij[2:])
+                C_inv_ij = C_inv[iii, jjj]
+                C_inv_splines[iii, jjj] = InterpolatedUnivariateSpline(
+                    Ls[2:], C_inv_ij[2:]
+                )
         self.C_inv_splines = C_inv_splines
-
 
     def _get_cmb_Cov_inv_spline(self, typ, fields):
         if fields != self._cov_inv_fields:
@@ -354,8 +442,6 @@ class QE:
 
         cov_inv = self.C_inv_splines[idx1][idx2]
         return cov_inv
-
-
 
     def _initialise(self, typ, deltaT, beam, exp="SO", data_dir=omegaqe.DATA_DIR):
         if self.cmb[typ].initialised:
@@ -371,13 +457,17 @@ class QE:
         gradCl_lens_spline = InterpolatedUnivariateSpline(Ls[2:], gradCl_lens[2:])
         self.cmb[typ].gradCl_spline = gradCl_lens_spline
 
-        N = self._noise.get_cmb_gaussian_N(typ, ellmax=6000, deltaT=deltaT, beam=beam, exp=exp, data_dir=data_dir)
+        N = self._noise.get_cmb_gaussian_N(
+            typ, ellmax=6000, deltaT=deltaT, beam=beam, exp=exp, data_dir=data_dir
+        )
         N_spline = InterpolatedUnivariateSpline(np.arange(np.size(N))[2:], N[2:])
         self.cmb[typ].N_spline = N_spline
         self.cmb[typ].initialised = True
         self._initialise(typ[::-1], deltaT, beam, exp)
 
-    def initialise(self, exp="SO", deltaT=None, beam=None, fields="TEB", data_dir=omegaqe.DATA_DIR):
+    def initialise(
+        self, exp="SO", deltaT=None, beam=None, fields="TEB", data_dir=omegaqe.DATA_DIR
+    ):
         """
         Parameters
         ----------
@@ -390,7 +480,6 @@ class QE:
         for arg in args:
             self._initialise(arg, deltaT, beam, exp, data_dir)
         self._build_cmb_Cov_inv_splines(fields=fields)
-
 
     def _initialise_manual(self, typ, Cl_lens, gradCl_lens, N):
         if self.cmb[typ].initialised:
@@ -423,4 +512,5 @@ class QE:
         self._initialise_manual(typ, Cl_lens, gradCl_lens, N)
 
 
-if __name__ == '__main__': pass
+if __name__ == "__main__":
+    pass

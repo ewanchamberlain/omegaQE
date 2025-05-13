@@ -1,14 +1,14 @@
 #  SO LAT noise power spectra: post-component separation noise for CMB E
 #  baseline sensitivity
-#  fsky = 0.4 
-#  polarization (EE) 
-#  units = uK^2 
-#  ell_min = 10 
-#  ell_max = 8000 
-#  Deproj-0: standard ILC 
-#  Deproj-1: fiducial polarized dust deprojection (constrained ILC) 
-#  Deproj-2: fiducial polarized synchrotron deprojection (constrained ILC) 
-#  Deproj-3: fiducial polarized dust and synchrotron deprojection (constrained ILC) 
+#  fsky = 0.4
+#  polarization (EE)
+#  units = uK^2
+#  ell_min = 10
+#  ell_max = 8000
+#  Deproj-0: standard ILC
+#  Deproj-1: fiducial polarized dust deprojection (constrained ILC)
+#  Deproj-2: fiducial polarized synchrotron deprojection (constrained ILC)
+#  Deproj-3: fiducial polarized dust and synchrotron deprojection (constrained ILC)
 #  columns: [ell] [Deproj-0] [Deproj-1] [Deproj-2] [Deproj-3]
 10 8.42877e-04 8.33787e-04 8.06091e-04 7.92408e-04
 11 7.48079e-04 7.40864e-04 7.21019e-04 7.10266e-04

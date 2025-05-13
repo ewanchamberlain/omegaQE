@@ -1,0 +1,10 @@
+numpy
+matplotlib
+scipy
+camb
+ipykernel
+ipywidgets
+tqdm
+healpy
+lenspyx
+vector==0.8.5

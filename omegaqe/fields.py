@@ -9,21 +9,44 @@ from scipy import stats
 import copy
 from datetime import datetime
 import warnings
-warnings.formatwarning = lambda msg, *args, **kwargs: f'{msg}\n'
+
+warnings.formatwarning = lambda msg, *args, **kwargs: f"{msg}\n"
 
 
 class Fields:
-
-    def __init__(self, fields, exp, N_pix_pow=10, kmax=5000, setup_cmb_lens_rec=False, HDres=None, Nsims=1, sim=0, resp_cls=None, fisher=None):
+    def __init__(
+        self,
+        fields,
+        exp,
+        N_pix_pow=10,
+        kmax=5000,
+        setup_cmb_lens_rec=False,
+        HDres=None,
+        Nsims=1,
+        sim=0,
+        resp_cls=None,
+        fisher=None,
+    ):
         # TODO: Lensit has ellM = int(np.around(kM - 1/2))?? So my maps disagree with lensit of small scales...
         self.exp = exp
         self.N_pix = 2**N_pix_pow
         self.HDres = HDres
-        self.kmax_map = self._get_kmax(kmax)                # If HDres is not None then HDres determines kmax_map
+        self.kmax_map = self._get_kmax(
+            kmax
+        )  # If HDres is not None then HDres determines kmax_map
         self.kmax_map_round = int(np.floor(self.kmax_map))
         self.kM, self.k_values = self._get_k_values()
         if fisher is None:
-            self.fish = Fisher(exp, "TEB", True, "gradient", (30, 3000, 30, 5000), False, False, data_dir=omegaqe.DATA_DIR)
+            self.fish = Fisher(
+                exp,
+                "TEB",
+                True,
+                "gradient",
+                (30, 3000, 30, 5000),
+                False,
+                False,
+                data_dir=omegaqe.DATA_DIR,
+            )
         else:
             self.fish = fisher
         self.covariance = self.fish.covariance
@@ -32,10 +55,16 @@ class Fields:
         input_kappa_map = None
         enforce_sym = True
         if setup_cmb_lens_rec:
-            self.rec = Reconstruction(self, exp, LDres=N_pix_pow, HDres=HDres, nsims=Nsims, resp_cls=resp_cls)
+            self.rec = Reconstruction(
+                self, exp, LDres=N_pix_pow, HDres=HDres, nsims=Nsims, resp_cls=resp_cls
+            )
             input_kappa_map = self._get_lensit_kappa_map(sim=self._sim)
             enforce_sym = False
-        self._fields = self._get_rearanged_fields(fields) if setup_cmb_lens_rec else self._get_fields(fields)   # includes lensit input kappa
+        self._fields = (
+            self._get_rearanged_fields(fields)
+            if setup_cmb_lens_rec
+            else self._get_fields(fields)
+        )  # includes lensit input kappa
         self.fields = self._get_fields(fields)
         self.template = None
         self.y = self._get_y(input_kappa_map)
@@ -56,21 +85,36 @@ class Fields:
             self.fft_maps[field] = self.get_map(field, fft=True, enforce_sym=enforce_sym)
             self.fft_noise_maps[field] = self.get_noise_map(field)
 
-    def setup_noise(self, exp=None, qe=None, gmv=None, ps=None, L_cuts=None, iter=None, iter_ext=None, data_dir=None):
+    def setup_noise(
+        self,
+        exp=None,
+        qe=None,
+        gmv=None,
+        ps=None,
+        L_cuts=None,
+        iter=None,
+        iter_ext=None,
+        data_dir=None,
+    ):
         return self.fish.setup_noise(exp, qe, gmv, ps, L_cuts, iter, iter_ext, data_dir)
 
     def _get_lensit_kappa_map(self, sim=0):
         phi_map = 2 * np.pi * self.rec.get_phi_input(return_map=True, sim=sim)
-        return phi_map * self.kM ** 2 / 2
+        return phi_map * self.kM**2 / 2
 
     def _get_lensit_dist(self, HDres):
-        return np.sqrt(4.*np.pi)/(2**14) * (2**(int(HDres-np.log2(self.N_pix)))) * self.N_pix
+        return (
+            np.sqrt(4.0 * np.pi)
+            / (2**14)
+            * (2 ** (int(HDres - np.log2(self.N_pix))))
+            * self.N_pix
+        )
 
     def _get_kmax(self, kmax):
         if self.HDres is None:
             return kmax
         kmax = np.sqrt(2) * self.N_pix * np.pi / self._get_lensit_dist(self.HDres)
-        return kmax     # Lensit do this ell = |k|-1/2, don't know why???
+        return kmax  # Lensit do this ell = |k|-1/2, don't know why???
 
     def _get_fields(self, fields):
         return np.char.array(list(fields))
@@ -86,8 +130,12 @@ class Fields:
         C = np.empty((self.kmax_map_round, N_fields, N_fields))
         for iii, field_i in enumerate(self._fields):
             for jjj, field_j in enumerate(self._fields):
-                C[:, iii, jjj] = self.covariance.get_Cl(field_i + field_j, ellmax=self.kmax_map_round)[1:]
-        return C * (2*np.pi)**2  # Shouldn't 2\pi factor be on the ps estimator instead?
+                C[:, iii, jjj] = self.covariance.get_Cl(
+                    field_i + field_j, ellmax=self.kmax_map_round
+                )[1:]
+        return (
+            C * (2 * np.pi) ** 2
+        )  # Shouldn't 2\pi factor be on the ps estimator instead?
 
     def _get_L(self, C):
         N_fields = np.size(self._fields)
@@ -97,7 +145,9 @@ class Fields:
         for iii in range(N_fields):
             for jjj in range(N_fields):
                 L_ij = L[:, iii, jjj]
-                L_new[:, iii, jjj] = InterpolatedUnivariateSpline(ks_sample, L_ij)(self.k_values)
+                L_new[:, iii, jjj] = InterpolatedUnivariateSpline(ks_sample, L_ij)(
+                    self.k_values
+                )
         return L_new
 
     def _get_seed(self, typ, cmb=False, sim=None):
@@ -142,7 +192,7 @@ class Fields:
             N_pix = self.N_pix
         if dist is None:
             dist = self.get_dist()
-        sep = dist/N_pix
+        sep = dist / N_pix
         kx = np.fft.rfftfreq(N_pix, sep) * 2 * np.pi
         ky = np.fft.fftfreq(N_pix, sep) * 2 * np.pi
         return kx, ky
@@ -168,13 +218,19 @@ class Fields:
         # Ensuring Nyquist points are real
         fft_map[self.N_pix // 2, 0] = np.real(fft_map[self.N_pix // 2, 0]) * np.sqrt(2)
         fft_map[0, self.N_pix // 2] = np.real(fft_map[0, self.N_pix // 2]) * np.sqrt(2)
-        fft_map[self.N_pix // 2, self.N_pix // 2] = np.real(fft_map[self.N_pix // 2, self.N_pix // 2]) * np.sqrt(2)
+        fft_map[self.N_pix // 2, self.N_pix // 2] = np.real(
+            fft_map[self.N_pix // 2, self.N_pix // 2]
+        ) * np.sqrt(2)
 
         # +ve k_y mirrors -ve conj(k_y) at k_x = 0
-        fft_map[self.N_pix // 2 + 1:, 0] = np.conjugate(fft_map[1:self.N_pix // 2, 0][::-1])
+        fft_map[self.N_pix // 2 + 1 :, 0] = np.conjugate(
+            fft_map[1 : self.N_pix // 2, 0][::-1]
+        )
 
         # +ve k_y mirrors -ve conj(k_y) at k_x = N/2 (Nyquist freq)
-        fft_map[self.N_pix // 2 + 1:, -1] = np.conjugate(fft_map[1:self.N_pix // 2, -1][::-1])
+        fft_map[self.N_pix // 2 + 1 :, -1] = np.conjugate(
+            fft_map[1 : self.N_pix // 2, -1][::-1]
+        )
         return fft_map
 
     def get_map(self, field, fft=True, enforce_sym=True):
@@ -187,7 +243,9 @@ class Fields:
             fft_map = self._enforce_symmetries(fft_map)
 
         if not fft:
-            return np.fft.irfft2(fft_map, norm="forward")     # Should check the normalisation
+            return np.fft.irfft2(
+                fft_map, norm="forward"
+            )  # Should check the normalisation
         return fft_map
 
     def _get_N(self, field):
@@ -199,16 +257,18 @@ class Fields:
         if field == "I":
             N_dust = self.covariance.noise.get_dust_N(353e9, ellmax=kmax)
             N_cib = self.covariance.noise.get_cib_shot_N(353e9, ellmax=kmax)
-            N = N_dust+N_cib
+            N = N_dust + N_cib
             return N
         nT, beam = self.covariance.noise.get_noise_args(self.exp)
-        return self.covariance.noise.get_cmb_gaussian_N(field, nT, beam, kmax, exp=self.exp)
+        return self.covariance.noise.get_cmb_gaussian_N(
+            field, nT, beam, kmax, exp=self.exp
+        )
 
     def EB_to_QU(self, Emap, Bmap, spin=2):
         # TODO: actually derive spin-1 transforms (spin-2 is eq5.20 in lensing review)
         kx, ky = self.get_kx_ky()
         phi_k = np.arctan2(ky[..., np.newaxis], kx[np.newaxis, ...])
-        exp_siphi = np.exp(spin*1j * phi_k)
+        exp_siphi = np.exp(spin * 1j * phi_k)
         cos = exp_siphi.real
         sin = exp_siphi.imag
         Qmap = cos * Emap - (sin * Bmap)
@@ -219,12 +279,16 @@ class Fields:
         N = self._get_N(field)
         Ls = np.arange(np.size(N))
         N_spline = InterpolatedUnivariateSpline(Ls[2:], N[2:])
-        gauss_matrix = self._get_gauss_matrix(np.shape(self.kM), set_seed=set_seed, typ=field, cmb=False, sim=sim)
+        gauss_matrix = self._get_gauss_matrix(
+            np.shape(self.kM), set_seed=set_seed, typ=field, cmb=False, sim=sim
+        )
         N_rfft = N_spline(self.kM)
         if np.any(N_rfft < 0):
-            warnings.warn(f"Negative values in {field} map noise will be converted to positive values")
+            warnings.warn(
+                f"Negative values in {field} map noise will be converted to positive values"
+            )
         n_rfft = np.sqrt(np.abs(N_rfft))
-        noise_map = self._enforce_symmetries(n_rfft * 2*np.pi * gauss_matrix)
+        noise_map = self._enforce_symmetries(n_rfft * 2 * np.pi * gauss_matrix)
         if muK:
             physical_length = np.sqrt(np.prod(self.rec.isocov.lib_skyalm.lsides))
             Tcmb = 2.7255
@@ -237,10 +301,14 @@ class Fields:
         Cl = self.covariance.noise.cosmo.get_lens_ps(field, self.kmax_map_round)
         Ls = np.arange(np.size(Cl))
         Cl_spline = InterpolatedUnivariateSpline(Ls[2:], Cl[2:])
-        gauss_matrix = self._get_gauss_matrix(np.shape(self.kM), set_seed=True, typ=field, cmb=True, sim=sim)
+        gauss_matrix = self._get_gauss_matrix(
+            np.shape(self.kM), set_seed=True, typ=field, cmb=True, sim=sim
+        )
         Cl_rfft = Cl_spline(self.kM)
         if np.any(Cl_rfft < 0):
-            warnings.warn(f"Negative values in {field} map will be converted to positive values")
+            warnings.warn(
+                f"Negative values in {field} map will be converted to positive values"
+            )
         Cl_sqrt_rfft = np.sqrt(np.abs(Cl_rfft))
         cmb_map = self._enforce_symmetries(Cl_sqrt_rfft * 2 * np.pi * gauss_matrix)
         if noise:
@@ -258,13 +326,15 @@ class Fields:
         Bmap_fft = self.get_cmb_map("BB", noise, fft=True, muK=muK)
         Qmap_fft, Umap_fft = self.EB_to_QU(Emap_fft, Bmap_fft)
         if not fft:
-            return np.fft.irfft2(Qmap_fft, norm="forward"), np.fft.irfft2(Umap_fft, norm="forward")
+            return np.fft.irfft2(Qmap_fft, norm="forward"), np.fft.irfft2(
+                Umap_fft, norm="forward"
+            )
         return Qmap_fft, Umap_fft
 
     def get_ps(self, rfft_map1, rfft_map2=None, kmin=1, kmax=None, kM=None):
         kM = self.kM if kM is None else kM
         if kmax is None:
-            kmax = int(np.floor(self.kmax_map/np.sqrt(2)))
+            kmax = int(np.floor(self.kmax_map / np.sqrt(2)))
         N_pix = np.shape(kM)[0]
         fft_map1 = copy.deepcopy(rfft_map1)
         if rfft_map2 is None:
@@ -274,59 +344,195 @@ class Fields:
 
         ps_raw = np.real(np.conjugate(fft_map1) * fft_map2)
         k_counts = np.bincount(kM[:, 1:-1].flatten().astype(int))
-        k_counts += np.bincount(kM[1:N_pix // 2, [0, -1]].flatten().astype(int))
-        ps = np.bincount(kM[:, 1:-1].flatten().astype(int), weights=ps_raw[:, 1:-1].flatten())
-        ps += np.bincount(kM[1:N_pix // 2, [0, -1]].flatten().astype(int), weights=ps_raw[1:N_pix // 2, [0, -1]].flatten())
+        k_counts += np.bincount(kM[1 : N_pix // 2, [0, -1]].flatten().astype(int))
+        ps = np.bincount(
+            kM[:, 1:-1].flatten().astype(int), weights=ps_raw[:, 1:-1].flatten()
+        )
+        ps += np.bincount(
+            kM[1 : N_pix // 2, [0, -1]].flatten().astype(int),
+            weights=ps_raw[1 : N_pix // 2, [0, -1]].flatten(),
+        )
 
         ps = ps / k_counts
         ps[k_counts == 0] = 0
-        ps = ps[:kmax + 1]
+        ps = ps[: kmax + 1]
         ps = ps[kmin:]
-        ks = np.arange(kmin, kmax+1)
+        ks = np.arange(kmin, kmax + 1)
 
         return ks, ps
 
-    def get_ps_binned(self, rfft_map1, rfft_map2=None, nBins=20, kmin=1, kmax=None, kM=None):
+    def get_ps_binned(
+        self, rfft_map1, rfft_map2=None, nBins=20, kmin=1, kmax=None, kM=None
+    ):
         ks, ps = self.get_ps(rfft_map1, rfft_map2, kmin, kmax, kM)
-        means, bin_edges, binnumber = stats.binned_statistic(ks, ps, 'mean', bins=nBins)
+        means, bin_edges, binnumber = stats.binned_statistic(ks, ps, "mean", bins=nBins)
         binSeperation = bin_edges[1] - bin_edges[0]
-        kBins = np.asarray([bin_edges[i] - binSeperation / 2 for i in range(1, len(bin_edges))])
-        counts, *others = stats.binned_statistic(ks, ps, 'count', bins=nBins)
-        stds, *others = stats.binned_statistic(ks, ps, 'std', bins=nBins)
+        kBins = np.asarray(
+            [bin_edges[i] - binSeperation / 2 for i in range(1, len(bin_edges))]
+        )
+        counts, *others = stats.binned_statistic(ks, ps, "count", bins=nBins)
+        stds, *others = stats.binned_statistic(ks, ps, "std", bins=nBins)
         errors = stds / np.sqrt(counts)
         return means, kBins, errors
 
-    def get_omega_rec(self, cmb_fields="T", include_noise=True, phi_idx=None, iter_rec=False, gaussCMB=False, diffSims=False, diffSim_offset=1):
+    def get_omega_rec(
+        self,
+        cmb_fields="T",
+        include_noise=True,
+        phi_idx=None,
+        iter_rec=False,
+        gaussCMB=False,
+        diffSims=False,
+        diffSim_offset=1,
+    ):
         if self.rec is None:
-            raise ValueError(f"CMB lensing reconstruction not setup for this Fields instance.")
-        curl_map = 2 * np.pi * self.rec.get_curl_rec(cmb_fields, return_map=True, include_noise=include_noise, sim=self._sim, phi_idx=phi_idx, iter_rec=iter_rec, gaussCMB=gaussCMB, diffSims=diffSims, diffSim_offset=diffSim_offset)
-        return curl_map * self.kM **2 / 2
+            raise ValueError(
+                "CMB lensing reconstruction not setup for this Fields instance."
+            )
+        curl_map = (
+            2
+            * np.pi
+            * self.rec.get_curl_rec(
+                cmb_fields,
+                return_map=True,
+                include_noise=include_noise,
+                sim=self._sim,
+                phi_idx=phi_idx,
+                iter_rec=iter_rec,
+                gaussCMB=gaussCMB,
+                diffSims=diffSims,
+                diffSim_offset=diffSim_offset,
+            )
+        )
+        return curl_map * self.kM**2 / 2
 
-    def get_kappa_rec(self, cmb_fields="T", include_noise=True, phi_idx=None, iter_rec=False, gaussCMB=False, diffSims=False, diffSim_offset=1):
+    def get_kappa_rec(
+        self,
+        cmb_fields="T",
+        include_noise=True,
+        phi_idx=None,
+        iter_rec=False,
+        gaussCMB=False,
+        diffSims=False,
+        diffSim_offset=1,
+    ):
         if self.rec is None:
-            raise ValueError(f"CMB lensing reconstruction not setup for this Fields instance.")
-        kappa_map = 2 * np.pi * self.rec.get_phi_rec(cmb_fields, return_map=True, include_noise=include_noise, sim=self._sim, phi_idx=phi_idx, iter_rec=iter_rec, gaussCMB=gaussCMB, diffSims=diffSims, diffSim_offset=diffSim_offset)
-        return kappa_map * self.kM **2 / 2
+            raise ValueError(
+                "CMB lensing reconstruction not setup for this Fields instance."
+            )
+        kappa_map = (
+            2
+            * np.pi
+            * self.rec.get_phi_rec(
+                cmb_fields,
+                return_map=True,
+                include_noise=include_noise,
+                sim=self._sim,
+                phi_idx=phi_idx,
+                iter_rec=iter_rec,
+                gaussCMB=gaussCMB,
+                diffSims=diffSims,
+                diffSim_offset=diffSim_offset,
+            )
+        )
+        return kappa_map * self.kM**2 / 2
 
     def get_omega_fiducial(self):
-        omega_Ls = self.fish.covariance.get_log_sample_Ls(2, self.kmax_map_round, 100, dL_small=2)
+        omega_Ls = self.fish.covariance.get_log_sample_Ls(
+            2, self.kmax_map_round, 100, dL_small=2
+        )
         C_omega = postborn.omega_ps(omega_Ls)
         C_omega_spline = InterpolatedUnivariateSpline(omega_Ls, C_omega)
         gauss_matrix = self._get_gauss_matrix(np.shape(self.kM))
-        return self._enforce_symmetries(np.sqrt(C_omega_spline(self.kM) * (2 * np.pi) ** 2) * gauss_matrix)
+        return self._enforce_symmetries(
+            np.sqrt(C_omega_spline(self.kM) * (2 * np.pi) ** 2) * gauss_matrix
+        )
 
-    def get_omega_template(self, Nchi=20, F_L_spline=None, C_inv_spline=None, tracer_noise=False, reinitialise=False, use_kappa_rec=False, kappa_rec_qe_typ="TEB", gaussCMB=False, diffMaps=False, diffMaps_offset=1):
+    def get_omega_template(
+        self,
+        Nchi=20,
+        F_L_spline=None,
+        C_inv_spline=None,
+        tracer_noise=False,
+        reinitialise=False,
+        use_kappa_rec=False,
+        kappa_rec_qe_typ="TEB",
+        gaussCMB=False,
+        diffMaps=False,
+        diffMaps_offset=1,
+    ):
         if self.template is None or reinitialise:
-            self.template = Template(self, Lmin=30, Lmax=3000, F_L_spline=F_L_spline, C_inv_spline=C_inv_spline, tracer_noise=tracer_noise, use_kappa_rec=use_kappa_rec, kappa_rec_qe_typ=kappa_rec_qe_typ, gaussCMB=gaussCMB, diffCMBs=diffMaps, diffCMBs_offset=diffMaps_offset)
+            self.template = Template(
+                self,
+                Lmin=30,
+                Lmax=3000,
+                F_L_spline=F_L_spline,
+                C_inv_spline=C_inv_spline,
+                tracer_noise=tracer_noise,
+                use_kappa_rec=use_kappa_rec,
+                kappa_rec_qe_typ=kappa_rec_qe_typ,
+                gaussCMB=gaussCMB,
+                diffCMBs=diffMaps,
+                diffCMBs_offset=diffMaps_offset,
+            )
         return self.template.get_omega(Nchi)
 
-    def get_kappa_template(self, Nchi=20, F_L_spline=None, C_inv_spline=None, tracer_noise=False, reinitialise=False, use_kappa_rec=False, kappa_rec_qe_typ="TEB", gaussCMB=False, diffMaps=False, diffMaps_offset=1, typ="pB"):
+    def get_kappa_template(
+        self,
+        Nchi=20,
+        F_L_spline=None,
+        C_inv_spline=None,
+        tracer_noise=False,
+        reinitialise=False,
+        use_kappa_rec=False,
+        kappa_rec_qe_typ="TEB",
+        gaussCMB=False,
+        diffMaps=False,
+        diffMaps_offset=1,
+        typ="pB",
+    ):
         if self.template is None or reinitialise:
-            self.template = Template(self, Lmin=30, Lmax=3000, F_L_spline=F_L_spline, C_inv_spline=C_inv_spline, tracer_noise=tracer_noise, use_kappa_rec=use_kappa_rec, kappa_rec_qe_typ=kappa_rec_qe_typ, gaussCMB=gaussCMB, diffCMBs=diffMaps, diffCMBs_offset=diffMaps_offset)
+            self.template = Template(
+                self,
+                Lmin=30,
+                Lmax=3000,
+                F_L_spline=F_L_spline,
+                C_inv_spline=C_inv_spline,
+                tracer_noise=tracer_noise,
+                use_kappa_rec=use_kappa_rec,
+                kappa_rec_qe_typ=kappa_rec_qe_typ,
+                gaussCMB=gaussCMB,
+                diffCMBs=diffMaps,
+                diffCMBs_offset=diffMaps_offset,
+            )
         return self.template.get_kappa_pB(Nchi, typ=typ)
 
-    def get_kappa_template_Pmethod(self, Nchi=20, F_L_spline=None, C_inv_spline=None, tracer_noise=False, reinitialise=False, use_kappa_rec=False, kappa_rec_qe_typ="TEB", gaussCMB=False, diffMaps=False, diffMaps_offset=1, typ="pB"):
+    def get_kappa_template_Pmethod(
+        self,
+        Nchi=20,
+        F_L_spline=None,
+        C_inv_spline=None,
+        tracer_noise=False,
+        reinitialise=False,
+        use_kappa_rec=False,
+        kappa_rec_qe_typ="TEB",
+        gaussCMB=False,
+        diffMaps=False,
+        diffMaps_offset=1,
+        typ="pB",
+    ):
         if self.template is None or reinitialise:
-            self.template = Template(self, Lmin=30, Lmax=3000, F_L_spline=F_L_spline, C_inv_spline=C_inv_spline, tracer_noise=tracer_noise, use_kappa_rec=use_kappa_rec, kappa_rec_qe_typ=kappa_rec_qe_typ, gaussCMB=gaussCMB, diffCMBs=diffMaps, diffCMBs_offset=diffMaps_offset)
+            self.template = Template(
+                self,
+                Lmin=30,
+                Lmax=3000,
+                F_L_spline=F_L_spline,
+                C_inv_spline=C_inv_spline,
+                tracer_noise=tracer_noise,
+                use_kappa_rec=use_kappa_rec,
+                kappa_rec_qe_typ=kappa_rec_qe_typ,
+                gaussCMB=gaussCMB,
+                diffCMBs=diffMaps,
+                diffCMBs_offset=diffMaps_offset,
+            )
         return self.template.get_kappa_pB(Nchi, typ=typ)
-

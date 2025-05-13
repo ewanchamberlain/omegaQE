@@ -12,11 +12,11 @@ import socket
 def _C_inv_splines(field_labels, C_inv, L_max, L_min_cut, L_max_cut):
     N_fields = np.size(list(field_labels))
     C_inv_splines = np.empty((N_fields, N_fields), dtype=InterpolatedUnivariateSpline)
-    Ls = np.arange(L_max+1)
+    Ls = np.arange(L_max + 1)
     for iii in range(N_fields):
         for jjj in range(N_fields):
             C_inv_ij = C_inv[iii, jjj]
-            C_inv_ij[L_max_cut+1:] = 0
+            C_inv_ij[L_max_cut + 1 :] = 0
             C_inv_ij[:L_min_cut] = 0
             C_inv_splines[iii, jjj] = InterpolatedUnivariateSpline(Ls, C_inv_ij)
     return C_inv_splines
@@ -24,8 +24,12 @@ def _C_inv_splines(field_labels, C_inv, L_max, L_min_cut, L_max_cut):
 
 def _F_L(fields_labels, exp, gmv, fields):
     gmv_str = "gmv" if gmv else "single"
-    Ls = np.load(f"{omegaqe.RESULTS_DIR}/_F_L/{fields_labels}/{exp}/{gmv_str}/{fields}/30_3000/1_2000/Ls.npy")
-    F_L = np.load(f"{omegaqe.RESULTS_DIR}/_F_L/{fields_labels}/{exp}/{gmv_str}/{fields}/30_3000/1_2000/F_L.npy")
+    Ls = np.load(
+        f"{omegaqe.RESULTS_DIR}/_F_L/{fields_labels}/{exp}/{gmv_str}/{fields}/30_3000/1_2000/Ls.npy"
+    )
+    F_L = np.load(
+        f"{omegaqe.RESULTS_DIR}/_F_L/{fields_labels}/{exp}/{gmv_str}/{fields}/30_3000/1_2000/F_L.npy"
+    )
     return Ls, F_L
 
 
@@ -39,7 +43,23 @@ def _qe_typ(fields, gmv):
     raise ValueError(f"fields: {fields} and gmv: {gmv} combination not yet supported.")
 
 
-def _main(exp, typ, LDres, HDres, maps, gmv, Nsims, Lmin_cut, Lmax_cut, use_kappa_rec, include_noise, gauss_cmb, diffMaps, out_dir, _id):
+def _main(
+    exp,
+    typ,
+    LDres,
+    HDres,
+    maps,
+    gmv,
+    Nsims,
+    Lmin_cut,
+    Lmax_cut,
+    use_kappa_rec,
+    include_noise,
+    gauss_cmb,
+    diffMaps,
+    out_dir,
+    _id,
+):
     # get basic information about the MPI communicator
     world_comm = MPI.COMM_WORLD
     world_size = world_comm.Get_size()
@@ -55,48 +75,71 @@ def _main(exp, typ, LDres, HDres, maps, gmv, Nsims, Lmin_cut, Lmax_cut, use_kapp
 
     mpi.output("-------------------------------------", my_rank, _id)
     mpi.output(f"Node: {socket.gethostname()}", my_rank, _id, use_rank=True)
-    mpi.output(f"exp:{exp}, tracers:{typ}, LDres: {LDres}, HDres: {HDres}, fields:{maps}, gmv:{gmv}, Nsims: {Nsims}, kappa_rec: {use_kappa_rec}, include_noise: {include_noise}, gauss_cmb: {gauss_cmb}, diffMaps: {diffMaps}", my_rank, _id)
+    mpi.output(
+        f"exp:{exp}, tracers:{typ}, LDres: {LDres}, HDres: {HDres}, fields:{maps}, gmv:{gmv}, Nsims: {Nsims}, kappa_rec: {use_kappa_rec}, include_noise: {include_noise}, gauss_cmb: {gauss_cmb}, diffMaps: {diffMaps}",
+        my_rank,
+        _id,
+    )
     nu = 353e9
 
     mpi.output("    Preparing grad Cls...", my_rank, _id)
     if my_rank == 0:
         from omegaqe.cosmology import Cosmology
+
         cosmo = Cosmology()
         Tcmb = 2.7255
-        conv_fac = (Tcmb*1e6)**2
-        grad_tt = cosmo.get_grad_lens_ps('TT', 6000) * conv_fac
-        grad_ee = cosmo.get_grad_lens_ps('EE', 6000) * conv_fac
-        grad_bb = cosmo.get_grad_lens_ps('BB', 6000) * conv_fac
-        grad_te = cosmo.get_grad_lens_ps('TE', 6000) * conv_fac
+        conv_fac = (Tcmb * 1e6) ** 2
+        grad_tt = cosmo.get_grad_lens_ps("TT", 6000) * conv_fac
+        grad_ee = cosmo.get_grad_lens_ps("EE", 6000) * conv_fac
+        grad_bb = cosmo.get_grad_lens_ps("BB", 6000) * conv_fac
+        grad_te = cosmo.get_grad_lens_ps("TE", 6000) * conv_fac
     else:
-        grad_tt = np.empty(6001, dtype='d')
-        grad_ee = np.empty(6001, dtype='d')
-        grad_bb = np.empty(6001, dtype='d')
-        grad_te = np.empty(6001, dtype='d')
+        grad_tt = np.empty(6001, dtype="d")
+        grad_ee = np.empty(6001, dtype="d")
+        grad_bb = np.empty(6001, dtype="d")
+        grad_te = np.empty(6001, dtype="d")
 
     mpi.output("    Broadcasting and storing grad Cls...", my_rank, _id)
     world_comm.Bcast([grad_tt, MPI.DOUBLE], root=0)
     world_comm.Bcast([grad_ee, MPI.DOUBLE], root=0)
     world_comm.Bcast([grad_bb, MPI.DOUBLE], root=0)
     world_comm.Bcast([grad_te, MPI.DOUBLE], root=0)
-    resp_cls = dict.fromkeys(['tt', 'ee', 'te', 'bb'])
-    resp_cls['tt'] = grad_tt
-    resp_cls['ee'] = grad_ee
-    resp_cls['bb'] = grad_bb
-    resp_cls['te'] = grad_te
+    resp_cls = dict.fromkeys(["tt", "ee", "te", "bb"])
+    resp_cls["tt"] = grad_tt
+    resp_cls["ee"] = grad_ee
+    resp_cls["bb"] = grad_bb
+    resp_cls["te"] = grad_te
 
     workloads = mpi.get_workloads(Nsims, world_size)
     my_start, my_end = mpi.get_start_end(my_rank, workloads)
 
-    mpi.output(f"Initialising Fields object...", my_rank, _id, use_rank=True)
-    field_obj = Fields(typ, exp=exp, N_pix_pow=LDres, setup_cmb_lens_rec=True, HDres=HDres, Nsims=2*Nsims, sim=0, resp_cls=resp_cls)
+    mpi.output("Initialising Fields object...", my_rank, _id, use_rank=True)
+    field_obj = Fields(
+        typ,
+        exp=exp,
+        N_pix_pow=LDres,
+        setup_cmb_lens_rec=True,
+        HDres=HDres,
+        Nsims=2 * Nsims,
+        sim=0,
+        resp_cls=resp_cls,
+    )
 
-    mpi.output(f"Setting up noise...", my_rank, _id)
-    field_obj.setup_noise(exp=exp, qe=maps, gmv=gmv, ps="gradient", L_cuts=(30, 3000, 30, 5000), iter=False, iter_ext=False, data_dir=omegaqe.DATA_DIR)
+    mpi.output("Setting up noise...", my_rank, _id)
+    field_obj.setup_noise(
+        exp=exp,
+        qe=maps,
+        gmv=gmv,
+        ps="gradient",
+        L_cuts=(30, 3000, 30, 5000),
+        iter=False,
+        iter_ext=False,
+        data_dir=omegaqe.DATA_DIR,
+    )
 
     Lmax_C_inv = 5000  # Highest L N0 calculated to
     N_typs = np.size(list(typ))
-    C_inv = np.empty((N_typs, N_typs, Lmax_C_inv + 1), dtype='d')
+    C_inv = np.empty((N_typs, N_typs, Lmax_C_inv + 1), dtype="d")
 
     if my_rank == 0:
         mpi.output("    Preparing C_inv...", my_rank, _id)
@@ -118,23 +161,52 @@ def _main(exp, typ, LDres, HDres, maps, gmv, Nsims, Lmin_cut, Lmax_cut, use_kapp
         mpi.output("Changing simulation: " + f" ({sim})", my_rank, _id, use_rank=True)
         field_obj.change_sim(int(sim))
 
-        mpi.output("Starting sim bias calculation..."+ f" ({sim})", my_rank, _id, use_rank=True)
+        mpi.output(
+            "Starting sim bias calculation..." + f" ({sim})", my_rank, _id, use_rank=True
+        )
 
         start_time = MPI.Wtime()
-        omega_rec = field_obj.get_omega_rec(qe_typ, include_noise=include_noise, gaussCMB=gauss_cmb, diffSims=diffMaps, diffSim_offset=Nsims)
+        omega_rec = field_obj.get_omega_rec(
+            qe_typ,
+            include_noise=include_noise,
+            gaussCMB=gauss_cmb,
+            diffSims=diffMaps,
+            diffSim_offset=Nsims,
+        )
         end_time = MPI.Wtime()
-        mpi.output("Lensing reconstruction time: " + str(end_time - start_time) + f" ({sim})", my_rank, _id, use_rank=True)
+        mpi.output(
+            "Lensing reconstruction time: " + str(end_time - start_time) + f" ({sim})",
+            my_rank,
+            _id,
+            use_rank=True,
+        )
 
         # if not gauss_cmb and not diffMaps:
-            # start_time = MPI.Wtime()
-            # omega_rec_dp = field_obj.get_omega_rec(qe_typ, include_noise=include_noise, phi_idx=int(sim + Nsims))
-            # end_time = MPI.Wtime()
-            # _output("Lensing reconstruction time (different phi): " + str(end_time - start_time) + f" ({sim})", my_rank, _id, use_rank=True)
+        # start_time = MPI.Wtime()
+        # omega_rec_dp = field_obj.get_omega_rec(qe_typ, include_noise=include_noise, phi_idx=int(sim + Nsims))
+        # end_time = MPI.Wtime()
+        # _output("Lensing reconstruction time (different phi): " + str(end_time - start_time) + f" ({sim})", my_rank, _id, use_rank=True)
 
         start_time = MPI.Wtime()
-        omega_temp = field_obj.get_omega_template(Nchi=100, F_L_spline=F_L_spline, C_inv_spline=C_inv_splines, reinitialise=True, use_kappa_rec=use_kappa_rec, kappa_rec_qe_typ=qe_typ, tracer_noise=include_noise, gaussCMB=gauss_cmb, diffMaps=diffMaps, diffMaps_offset=Nsims)
+        omega_temp = field_obj.get_omega_template(
+            Nchi=100,
+            F_L_spline=F_L_spline,
+            C_inv_spline=C_inv_splines,
+            reinitialise=True,
+            use_kappa_rec=use_kappa_rec,
+            kappa_rec_qe_typ=qe_typ,
+            tracer_noise=include_noise,
+            gaussCMB=gauss_cmb,
+            diffMaps=diffMaps,
+            diffMaps_offset=Nsims,
+        )
         end_time = MPI.Wtime()
-        mpi.output("Template construction time: " + str(end_time - start_time)+ f" ({sim})", my_rank, _id, use_rank=True)
+        mpi.output(
+            "Template construction time: " + str(end_time - start_time) + f" ({sim})",
+            my_rank,
+            _id,
+            use_rank=True,
+        )
 
         mpi.output(f"Calculating cross-spectrum ({sim})", my_rank, _id, use_rank=True)
         Ls, ps_tmp = field_obj.get_ps(omega_rec, omega_temp, kmin=Lmin_cut, kmax=Lmax_cut)
@@ -144,7 +216,7 @@ def _main(exp, typ, LDres, HDres, maps, gmv, Nsims, Lmin_cut, Lmax_cut, use_kapp
         #     Ls, ps_tmp_dp = field_obj.get_ps(omega_rec_dp, omega_temp, kmin=Lmin_cut, kmax=Lmax_cut)
 
         if ps_arr is None:
-            ps_arr = np.zeros((my_end-my_start, np.size(ps_tmp)))
+            ps_arr = np.zeros((my_end - my_start, np.size(ps_tmp)))
         if ps_arr_dp is None:
             ps_arr_dp = np.zeros((my_end - my_start, np.size(ps_tmp)))
         ps_arr[iii] = ps_tmp
@@ -162,7 +234,7 @@ def _main(exp, typ, LDres, HDres, maps, gmv, Nsims, Lmin_cut, Lmax_cut, use_kapp
             ps_all_dp[my_start:my_end] = ps_arr_dp
         for rank in range(1, world_size):
             start, end = mpi.get_start_end(rank, workloads)
-            ps_tmp = np.empty((end-start, np.size(ps_all[0])))
+            ps_tmp = np.empty((end - start, np.size(ps_all[0])))
             world_comm.Recv([ps_tmp, MPI.DOUBLE], source=rank, tag=77)
             ps_all[start:end] = ps_tmp
 
@@ -181,8 +253,8 @@ def _main(exp, typ, LDres, HDres, maps, gmv, Nsims, Lmin_cut, Lmax_cut, use_kapp
         out_dir += f"/{typ}/{exp}/{gmv_str}/{maps}/{LDres}_{HDres}/{Lmin_cut}_{Lmax_cut}/{Nsims}/{kappa_rec_str}/"
         if not os.path.isdir(out_dir):
             os.makedirs(out_dir)
-        np.save(out_dir+"/Ls", Ls)
-        np.save(out_dir+"/ps", ps_all)
+        np.save(out_dir + "/Ls", Ls)
+        np.save(out_dir + "/ps", ps_all)
         # if not gauss_cmb and not diffMaps:
         #     np.save(out_dir + "/ps_dp", ps_all_dp)
         end_time_tot = MPI.Wtime()
@@ -194,10 +266,12 @@ def _main(exp, typ, LDres, HDres, maps, gmv, Nsims, Lmin_cut, Lmax_cut, use_kapp
         #     world_comm.Send([ps_arr_dp, MPI.DOUBLE], dest=0, tag=77)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = sys.argv[1:]
     if len(args) != 15:
-        raise ValueError("Arguments should be exp typ LDres HDres fields gmv Nsims Lmin_cut Lmax_cut kappa_rec include_noise gauss_cmb diffMaps out_dir _id")
+        raise ValueError(
+            "Arguments should be exp typ LDres HDres fields gmv Nsims Lmin_cut Lmax_cut kappa_rec include_noise gauss_cmb diffMaps out_dir _id"
+        )
     exp = str(args[0])
     typ = str(args[1])
     LDres = int(args[2])
@@ -205,7 +279,7 @@ if __name__ == '__main__':
     fields = str(args[4])
     gmv = parse_boolean(args[5])
     Nsims = int(args[6])
-    Lmin_cut=int(args[7])
+    Lmin_cut = int(args[7])
     Lmax_cut = int(args[8])
     use_kappa_rec = parse_boolean(args[9])
     include_noise = parse_boolean(args[10])
@@ -213,4 +287,20 @@ if __name__ == '__main__':
     diffMaps = parse_boolean(args[12])
     out_dir = str(args[13])
     _id = str(args[14])
-    _main(exp, typ, LDres, HDres, fields, gmv, Nsims, Lmin_cut, Lmax_cut, use_kappa_rec, include_noise, gauss_cmb, diffMaps, out_dir, _id)
+    _main(
+        exp,
+        typ,
+        LDres,
+        HDres,
+        fields,
+        gmv,
+        Nsims,
+        Lmin_cut,
+        Lmax_cut,
+        use_kappa_rec,
+        include_noise,
+        gauss_cmb,
+        diffMaps,
+        out_dir,
+        _id,
+    )

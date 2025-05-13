@@ -7,6 +7,7 @@ from omegaqe.tools import parse_boolean, mpi, none_or_str, getFileSep
 import os
 import sys
 
+
 def _main(exp, typs, params, condition, dir, _id, H0):
     # get basic information about the MPI communicator
     world_comm = MPI.COMM_WORLD
@@ -24,13 +25,13 @@ def _main(exp, typs, params, condition, dir, _id, H0):
     # params = np.array(["ombh2", "omch2", "omk", "tau", "As", "ns", "omnuh2", "w", "wa"])
     N_params = np.size(params)
     # N_param_combos = N_params**2
-    N_param_combos = int(N_params*(N_params-1)/2 + N_params)
+    N_param_combos = int(N_params * (N_params - 1) / 2 + N_params)
 
     all_indices = np.empty(N_param_combos, dtype=object)
     count = 0
     for iii in range(N_params):
         for jjj in range(iii, N_params):
-            all_indices[count] = (iii,jjj)
+            all_indices[count] = (iii, jjj)
             count += 1
 
     workloads = mpi.get_workloads(N_param_combos, world_size)
@@ -39,16 +40,25 @@ def _main(exp, typs, params, condition, dir, _id, H0):
     mpi.output("Initialisation finished.", my_rank, _id)
 
     cosmo = Cosmology(paramfile="Planck")
-    fish = Fisher(exp=exp, qe="TEB", gmv=True, ps="gradient", L_cuts=(30,3000,30,5000), iter=False, iter_ext=False, data_dir=f"{omegaqe.dir_path}/data_planck/", cosmology=cosmo)
-    
+    fish = Fisher(
+        exp=exp,
+        qe="TEB",
+        gmv=True,
+        ps="gradient",
+        L_cuts=(30, 3000, 30, 5000),
+        iter=False,
+        iter_ext=False,
+        data_dir=f"{omegaqe.dir_path}/data_planck/",
+        cosmology=cosmo,
+    )
+
     param_str = ""
     for p in params:
         param_str += "_" + p
     condition_dir = f"{dir}/condition/{param_str}"
     if condition:
-        dx_kk = 1/np.sqrt(np.load(f"{condition_dir}/kk.npy"))
-        dx_cmb = 1/np.sqrt(np.load(f"{condition_dir}/cmb.npy"))
-
+        dx_kk = 1 / np.sqrt(np.load(f"{condition_dir}/kk.npy"))
+        dx_cmb = 1 / np.sqrt(np.load(f"{condition_dir}/cmb.npy"))
 
     start_time = MPI.Wtime()
     F_kk = np.empty(my_end - my_start)
@@ -59,14 +69,51 @@ def _main(exp, typs, params, condition, dir, _id, H0):
     for _i, idx in enumerate(np.arange(my_start, my_end)):
         iii, jjj = all_indices[idx]
         if condition:
-            F_kk[_i] = fish.get_kappa_ps_Fisher(Lmax=3000, f_sky=0.4, param=(params[iii], params[jjj]), dx=(dx_kk[iii], dx_kk[jjj]), dx_absolute=True)
-            F_cmb[_i] = fish.get_cmb_Fisher(Lmax=3000, f_sky=0.4, param=(params[iii], params[jjj]), dx=(dx_cmb[iii], dx_cmb[jjj]), dx_absolute=True)
+            F_kk[_i] = fish.get_kappa_ps_Fisher(
+                Lmax=3000,
+                f_sky=0.4,
+                param=(params[iii], params[jjj]),
+                dx=(dx_kk[iii], dx_kk[jjj]),
+                dx_absolute=True,
+            )
+            F_cmb[_i] = fish.get_cmb_Fisher(
+                Lmax=3000,
+                f_sky=0.4,
+                param=(params[iii], params[jjj]),
+                dx=(dx_cmb[iii], dx_cmb[jjj]),
+                dx_absolute=True,
+            )
         else:
-            F_kk[_i] = fish.get_kappa_ps_Fisher(Lmax=3000, f_sky=0.4, param=(params[iii], params[jjj]), dx=None, H0=H0)
-            F_cmb[_i] = fish.get_cmb_Fisher(Lmax=3000, f_sky=0.4, param=(params[iii], params[jjj]), dx=None, H0=H0)
-            F_kkk[_i] = fish.get_bispectrum_Fisher("kkk", Lmax=3000, f_sky=0.4, param=(params[iii], params[jjj]), dx=None, H0=H0)
-            F_ww[_i] = fish.get_omega_ps_Fisher(Lmax=3000, f_sky=0.4, param=(params[iii], params[jjj]), H0=H0, auto=False, F_L_path="/mnt/lustre/users/astro/mr671/F_L/results_planck/")
-            F_lss[_i] = fish.get_lss_Fisher("kgI", Lmax=3000, f_sky=0.4, param=(params[iii], params[jjj]), dx=None, H0=H0)
+            F_kk[_i] = fish.get_kappa_ps_Fisher(
+                Lmax=3000, f_sky=0.4, param=(params[iii], params[jjj]), dx=None, H0=H0
+            )
+            F_cmb[_i] = fish.get_cmb_Fisher(
+                Lmax=3000, f_sky=0.4, param=(params[iii], params[jjj]), dx=None, H0=H0
+            )
+            F_kkk[_i] = fish.get_bispectrum_Fisher(
+                "kkk",
+                Lmax=3000,
+                f_sky=0.4,
+                param=(params[iii], params[jjj]),
+                dx=None,
+                H0=H0,
+            )
+            F_ww[_i] = fish.get_omega_ps_Fisher(
+                Lmax=3000,
+                f_sky=0.4,
+                param=(params[iii], params[jjj]),
+                H0=H0,
+                auto=False,
+                F_L_path="/mnt/lustre/users/astro/mr671/F_L/results_planck/",
+            )
+            F_lss[_i] = fish.get_lss_Fisher(
+                "kgI",
+                Lmax=3000,
+                f_sky=0.4,
+                param=(params[iii], params[jjj]),
+                dx=None,
+                H0=H0,
+            )
 
     end_time = MPI.Wtime()
 
@@ -80,33 +127,33 @@ def _main(exp, typs, params, condition, dir, _id, H0):
         F_arr_kkk = np.ones(N_param_combos)
         F_arr_ww = np.ones(N_param_combos)
         F_arr_lss = np.ones(N_param_combos)
-        F_arr_kk[my_start: my_end] = F_kk
-        F_arr_cmb[my_start: my_end] = F_cmb
-        F_arr_kkk[my_start: my_end] = F_kkk
-        F_arr_ww[my_start: my_end] = F_ww
-        F_arr_lss[my_start: my_end] = F_lss
+        F_arr_kk[my_start:my_end] = F_kk
+        F_arr_cmb[my_start:my_end] = F_cmb
+        F_arr_kkk[my_start:my_end] = F_kkk
+        F_arr_ww[my_start:my_end] = F_ww
+        F_arr_lss[my_start:my_end] = F_lss
         for rank in range(1, world_size):
             start, end = mpi.get_start_end(rank, workloads)
 
             F_kk = np.empty(end - start)
             world_comm.Recv([F_kk, MPI.DOUBLE], source=rank, tag=77)
-            F_arr_kk[start: end] = F_kk
+            F_arr_kk[start:end] = F_kk
 
             F_cmb = np.empty(end - start)
             world_comm.Recv([F_cmb, MPI.DOUBLE], source=rank, tag=77)
-            F_arr_cmb[start: end] = F_cmb
+            F_arr_cmb[start:end] = F_cmb
 
             F_kkk = np.empty(end - start)
             world_comm.Recv([F_kkk, MPI.DOUBLE], source=rank, tag=77)
-            F_arr_kkk[start: end] = F_kkk
+            F_arr_kkk[start:end] = F_kkk
 
             F_ww = np.empty(end - start)
             world_comm.Recv([F_ww, MPI.DOUBLE], source=rank, tag=77)
-            F_arr_ww[start: end] = F_ww
+            F_arr_ww[start:end] = F_ww
 
             F_lss = np.empty(end - start)
             world_comm.Recv([F_lss, MPI.DOUBLE], source=rank, tag=77)
-            F_arr_lss[start: end] = F_lss
+            F_arr_lss[start:end] = F_lss
         dir += f"{exp}/{typs}/{param_str}"
         if not os.path.isdir(dir):
             os.makedirs(dir)
@@ -126,17 +173,18 @@ def _main(exp, typs, params, condition, dir, _id, H0):
         world_comm.Send([F_lss, MPI.DOUBLE], dest=0, tag=77)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = sys.argv[1:]
     if len(args) != 7:
         raise ValueError(
-            "Must supply arguments: exp, typs, params, condition, dir, id, H0")
+            "Must supply arguments: exp, typs, params, condition, dir, id, H0"
+        )
     exp = str(args[0])
     typs = str(args[1])
-    params = np.array(args[2].split(','))
+    params = np.array(args[2].split(","))
     condition = parse_boolean(args[3])
     # tau_prior (see 2309.03021)
     dir = args[4]
     _id = args[5]
     H0 = parse_boolean(args[6])
-    _main(exp, typs, params,condition, dir, _id, H0)
+    _main(exp, typs, params, condition, dir, _id, H0)

@@ -16,6 +16,7 @@ def output(message, my_rank, _id, use_rank=False):
         f.write("[" + str(datetime.datetime.now()) + "] " + message + "\n")
         f.close()
 
+
 def get_workloads(N, world_size):
     workloads = [N // world_size for _ in range(world_size)]
     for iii in range(N % world_size):

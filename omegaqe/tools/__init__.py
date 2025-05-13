@@ -24,6 +24,7 @@ def save_array(directory, filename, array):
     sep = getFileSep()
     np.save(directory + sep + filename, array)
 
+
 def none_or_str(string):
     if string == "None":
         return None

@@ -1,5 +1,5 @@
 [project]
-name = "omegaQE"
+name = "omegaqe"
 dynamic = ["version"]
 dependencies = [
     "numpy",
@@ -8,10 +8,10 @@ dependencies = [
     "camb",
     "ipykernel",
     "ipywidgets",
+    "tqdm",
     "healpy",
     "lenspyx",
-    "pandas",
-
+    "vector==0.8.5",
 ]
 
 [tool.ruff]
@@ -23,6 +23,7 @@ exclude = [
     ".git",
     ".git-rewrite",
     ".hg",
+    "*.ipynb",
     ".ipynb_checkpoints",
     ".mypy_cache",
     ".nox",

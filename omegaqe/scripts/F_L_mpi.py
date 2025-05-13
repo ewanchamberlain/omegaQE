@@ -9,7 +9,25 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 from fullsky_sims.demnunii import Demnunii
 # from fullsky_sims.agora import Agora
 
-def _main(typ, exp, fields, gmv, Lmax, Lcut_min, Lcut_max, dL2, Ntheta, N_Ls, iter, mag_bias, omega, pB_only, out_dir, _id):
+
+def _main(
+    typ,
+    exp,
+    fields,
+    gmv,
+    Lmax,
+    Lcut_min,
+    Lcut_max,
+    dL2,
+    Ntheta,
+    N_Ls,
+    iter,
+    mag_bias,
+    omega,
+    pB_only,
+    out_dir,
+    _id,
+):
     # get basic information about the MPI communicator
     world_comm = MPI.COMM_WORLD
     world_size = world_comm.Get_size()
@@ -24,25 +42,43 @@ def _main(typ, exp, fields, gmv, Lmax, Lcut_min, Lcut_max, dL2, Ntheta, N_Ls, it
             pass
 
     mpi.output("-------------------------------------", my_rank, _id)
-    mpi.output(f"typ:{typ}, exp:{exp}, fields:{fields}, gmv:{gmv}, iter:{iter}, Lmax:{Lmax}, Lcut_min:{Lcut_min}, Lcut_max:{Lcut_max}, dL2:{dL2}, Ntheta:{Ntheta}, N_Ls:{N_Ls}, mag_bias:{mag_bias}", my_rank, _id)
+    mpi.output(
+        f"typ:{typ}, exp:{exp}, fields:{fields}, gmv:{gmv}, iter:{iter}, Lmax:{Lmax}, Lcut_min:{Lcut_min}, Lcut_max:{Lcut_max}, dL2:{dL2}, Ntheta:{Ntheta}, N_Ls:{N_Ls}, mag_bias:{mag_bias}",
+        my_rank,
+        _id,
+    )
     nu = 353e9
 
     mpi.output("Initialising Fisher object...", my_rank, _id)
     dm = Demnunii()
     # dm.power.cosmo._pars.NonLinearModel.set_params(halofit_version='mead') #tmp
     # dm.power.matter_PK = dm.power.cosmo.get_matter_PK(typ="matter")  #tmp
-    fish = Fisher(exp=exp, qe=fields, gmv=gmv, ps="gradient", L_cuts=(30,3000,30,5000), iter=iter, iter_ext=False, data_dir=f"{omegaqe.DATA_DIR}", cosmology=dm.cosmo)
+    fish = Fisher(
+        exp=exp,
+        qe=fields,
+        gmv=gmv,
+        ps="gradient",
+        L_cuts=(30, 3000, 30, 5000),
+        iter=iter,
+        iter_ext=False,
+        data_dir=f"{omegaqe.DATA_DIR}",
+        cosmology=dm.cosmo,
+    )
     if mag_bias != 0:
         mpi.output(f"Setting up magbias {mag_bias}", my_rank, _id)
         fish.covariance.mag_bias = True
         # fish.covariance.power.cosmo.s_spline = fish.covariance.power.cosmo.get_s_spline(mag_bias)
         fish.covariance.power.cosmo.set_magbias(mag_bias)
     if not omega:
-        mpi.output("Changing galaxy number density to 7 (equivalent for unWISE)", my_rank, _id)
-        fish.covariance.noise.n = fish.covariance.noise.n = 7   #n=7 for 1 billion gals (unWise)
+        mpi.output(
+            "Changing galaxy number density to 7 (equivalent for unWISE)", my_rank, _id
+        )
+        fish.covariance.noise.n = fish.covariance.noise.n = (
+            7  # n=7 for 1 billion gals (unWise)
+        )
     fish.covariance.power = dm.power
     fish.power = dm.power
-    
+
     # ag = Agora()
     # fish = Fisher(exp=exp, qe=fields, gmv=gmv, ps="gradient", L_cuts=(30,3000,30,5000), iter=iter, iter_ext=False, data_dir=f"{omegaqe.DATA_DIR}"+"_ag", cosmology=ag.cosmo)
     # fish.bi._mode.use_LSST_abcde = True
@@ -51,7 +87,7 @@ def _main(typ, exp, fields, gmv, Lmax, Lcut_min, Lcut_max, dL2, Ntheta, N_Ls, it
     # fish.covariance.noise.full_sky = True
 
     mpi.output("Setting up bispectra splines...", my_rank, _id)
-    fish.setup_bispectra(Nell=200,path=f"{omegaqe.CACHE_DIR}/_M")
+    fish.setup_bispectra(Nell=200, path=f"{omegaqe.CACHE_DIR}/_M")
     # fish.setup_bispectra(Nell=200,path=f"{omegaqe.CACHE_DIR}_ag/_M_dm")
 
     mpi.output("    Preparing C_inv...", my_rank, _id)
@@ -60,7 +96,7 @@ def _main(typ, exp, fields, gmv, Lmax, Lcut_min, Lcut_max, dL2, Ntheta, N_Ls, it
         C_inv = fish.covariance.get_C_inv(typ, Lmax, nu, gal_distro="LSST_gold")
     else:
         N_typs = np.size(list(typ))
-        C_inv = np.empty((N_typs, N_typs, Lmax + 1), dtype='d')
+        C_inv = np.empty((N_typs, N_typs, Lmax + 1), dtype="d")
 
     mpi.output("    Broadcasting and storing C_inv...", my_rank, _id)
     world_comm.Bcast([C_inv, MPI.DOUBLE], root=0)
@@ -83,7 +119,21 @@ def _main(typ, exp, fields, gmv, Lmax, Lcut_min, Lcut_max, dL2, Ntheta, N_Ls, it
     mpi.output("Starting F_L calculation...", my_rank, _id)
 
     start_time = MPI.Wtime()
-    _, F_L = fish.get_F_L(typ, Ls_samp[my_start: my_end], dL2=dL2, Ntheta=Ntheta, nu=nu, return_C_inv=False, gal_distro="LSST_gold", use_cache=True, Lmin=Lcut_min, Lmax=Lcut_max, mag_bias=fish.covariance.mag_bias, omega=omega, pB_only=pB_only)
+    _, F_L = fish.get_F_L(
+        typ,
+        Ls_samp[my_start:my_end],
+        dL2=dL2,
+        Ntheta=Ntheta,
+        nu=nu,
+        return_C_inv=False,
+        gal_distro="LSST_gold",
+        use_cache=True,
+        Lmin=Lcut_min,
+        Lmax=Lcut_max,
+        mag_bias=fish.covariance.mag_bias,
+        omega=omega,
+        pB_only=pB_only,
+    )
     # _, F_L = fish.get_F_L(typ, Ls_samp[my_start: my_end], dL2=dL2, Ntheta=Ntheta, nu=nu, return_C_inv=False, gal_distro="agora", use_cache=True, Lmin=Lcut_min, Lmax=Lcut_max)
     end_time = MPI.Wtime()
 
@@ -93,22 +143,25 @@ def _main(typ, exp, fields, gmv, Lmax, Lcut_min, Lcut_max, dL2, Ntheta, N_Ls, it
         print("F_L time: " + str(end_time - start_time))
         mpi.output("F_L time: " + str(end_time - start_time), my_rank, _id)
         F_L_arr = np.ones(N_Ls)
-        F_L_arr[my_start: my_end] = F_L
+        F_L_arr[my_start:my_end] = F_L
         for rank in range(1, world_size):
             start, end = mpi.get_start_end(rank, workloads)
             F_L = np.empty(end - start)
             world_comm.Recv([F_L, MPI.DOUBLE], source=rank, tag=77)
-            F_L_arr[start: end] = F_L
+            F_L_arr[start:end] = F_L
         gmv_str = "gmv" if gmv else "single"
-        if iter: gmv_str += "_iter"
-        out_dir += f"/{typ}/{exp}/{gmv_str}/{fields}/{Lcut_min}_{Lcut_max}/{dL2}_{Ntheta}/"
+        if iter:
+            gmv_str += "_iter"
+        out_dir += (
+            f"/{typ}/{exp}/{gmv_str}/{fields}/{Lcut_min}_{Lcut_max}/{dL2}_{Ntheta}/"
+        )
         if not os.path.isdir(out_dir):
             os.makedirs(out_dir)
         filename_ext = f"_u{mag_bias}" if fish.covariance.mag_bias else ""
         filename_ext += "_k" if not omega else ""
         filename_ext += "_pB" if pB_only else ""
-        np.save(out_dir+"/Ls"+filename_ext, Ls_samp)
-        np.save(out_dir+"/F_L"+filename_ext, F_L_arr)
+        np.save(out_dir + "/Ls" + filename_ext, Ls_samp)
+        np.save(out_dir + "/F_L" + filename_ext, F_L_arr)
         end_time_tot = MPI.Wtime()
         print("Total time: " + str(end_time_tot - start_time_tot))
         mpi.output("Total time: " + str(end_time_tot - start_time_tot), my_rank, _id)
@@ -116,10 +169,12 @@ def _main(typ, exp, fields, gmv, Lmax, Lcut_min, Lcut_max, dL2, Ntheta, N_Ls, it
         world_comm.Send([F_L, MPI.DOUBLE], dest=0, tag=77)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = sys.argv[1:]
     if len(args) != 16:
-        raise ValueError("Arguments should be typ exp fields gmv Lmax Lcut_min Lcut_max dL2 Ntheta N_Ls iter mag_bias omega pB_only out_dir _id")
+        raise ValueError(
+            "Arguments should be typ exp fields gmv Lmax Lcut_min Lcut_max dL2 Ntheta N_Ls iter mag_bias omega pB_only out_dir _id"
+        )
     typ = str(args[0])
     exp = str(args[1])
     fields = str(args[2])
@@ -136,4 +191,21 @@ if __name__ == '__main__':
     pB_only = parse_boolean(args[13])
     out_dir = args[14]
     _id = args[15]
-    _main(typ, exp, fields, gmv, Lmax, Lcut_min, Lcut_max, dL2, Ntheta, N_Ls, iter, mag_bias, omega, pB_only, out_dir, _id)
+    _main(
+        typ,
+        exp,
+        fields,
+        gmv,
+        Lmax,
+        Lcut_min,
+        Lcut_max,
+        dL2,
+        Ntheta,
+        N_Ls,
+        iter,
+        mag_bias,
+        omega,
+        pB_only,
+        out_dir,
+        _id,
+    )

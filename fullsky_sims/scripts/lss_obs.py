@@ -13,5 +13,5 @@ def main(nbody="DEMNUnii", nthreads=30):
     nbody.sht.write_map(f"{nbody.cache_dir}/_maps/I_len.fits", cib_map)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

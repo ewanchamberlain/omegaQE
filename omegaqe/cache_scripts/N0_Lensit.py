@@ -5,13 +5,16 @@ import omegaqe.tools as tools
 
 cache_dir = omegaqe.CACHE_DIR
 
+
 def lensit_cache_dir_setup():
-    if not 'LENSIT' in os.environ.keys():
-        os.environ['LENSIT'] = '_tmp'
+    if "LENSIT" not in os.environ.keys():
+        os.environ["LENSIT"] = "_tmp"
 
 
 def get_N0(exp, LDres, HDres, estimator):
-    print(f"Getting Noise from experiment {exp} at resolution LDres={LDres}, HDres={HDres} for QE={estimator}")
+    print(
+        f"Getting Noise from experiment {exp} at resolution LDres={LDres}, HDres={HDres} for QE={estimator}"
+    )
     isocov = li.get_isocov(exp, LDres, HDres)
     return isocov.get_N0cls(estimator, isocov.lib_skyalm)
 
@@ -20,7 +23,7 @@ def main(exp, LDres, HDres, estimator):
     lensit_cache_dir_setup()
     N0 = get_N0(exp, LDres, HDres, estimator)
 
-    folder = cache_dir + '_N0'
+    folder = cache_dir + "_N0"
     filename = f"N0_{exp}_{LDres}_{HDres}_{estimator}.npy"
     print(f"Saving {filename} in {folder}")
     tools.save_array(folder, filename, N0)

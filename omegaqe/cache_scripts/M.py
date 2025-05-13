@@ -8,15 +8,18 @@ from fullsky_sims.agora import Agora
 
 cache_dir = "/mnt/lustre/users/astro/mr671/omegaQE/fullsky_sims/cache/"
 
+
 def M_matrix(mode, ells, star, typ):
     Nells = np.size(ells)
     M = np.ones((Nells, Nells))
-    print(f"{0}/{Nells}", end='')
+    print(f"{0}/{Nells}", end="")
     for iii, ell in enumerate(ells):
-        print('\r', end='')
-        print(f"{iii}/{Nells}", end='')
+        print("\r", end="")
+        print(f"{iii}/{Nells}", end="")
         # M[iii, :] = mode.components(np.ones(Nells) * ell, ells, typ=typ, star=star, gal_distro="LSST_gold")
-        M[iii, :] = mode.components(np.ones(Nells) * ell, ells, typ=typ, star=star, gal_distro="agora")
+        M[iii, :] = mode.components(
+            np.ones(Nells) * ell, ells, typ=typ, star=star, gal_distro="agora"
+        )
     return M
 
 
@@ -35,7 +38,7 @@ def save(ells, M, star, typ):
 
 def main(ellmax, Nells, star, typ):
     ag = Agora()
-    power =ag.power
+    power = ag.power
     mode = Modecoupling(powerspectra=power)
     mode.use_LSST_abcde = False
 

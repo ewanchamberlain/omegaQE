@@ -37,30 +37,38 @@ class Noise:
         self.n = 40
 
     def _get_N0_phi(self, ellmax):
-        return np.concatenate((np.zeros(self.cmb_offset), self.N0[0][:ellmax + 1 - self.cmb_offset]))
+        return np.concatenate(
+            (np.zeros(self.cmb_offset), self.N0[0][: ellmax + 1 - self.cmb_offset])
+        )
 
     def _get_N0_curl(self, ellmax):
-        return np.concatenate((np.zeros(self.cmb_offset), self.N0[1][:ellmax + 1 - self.cmb_offset]))
+        return np.concatenate(
+            (np.zeros(self.cmb_offset), self.N0[1][: ellmax + 1 - self.cmb_offset])
+        )
 
     def _get_N0_kappa(self, ellmax):
         ells = np.arange(ellmax + 1)
-        fac = 0.25 * (ells * (ells+1)) ** 2 if self.full_sky else 0.25 * (ells) ** 4
+        fac = 0.25 * (ells * (ells + 1)) ** 2 if self.full_sky else 0.25 * (ells) ** 4
         return self._get_N0_phi(ellmax) * fac
 
     def _get_N0_omega(self, ellmax):
         ells = np.arange(ellmax + 1)
-        fac = 0.25 * (ells * (ells+1)) ** 2 if self.full_sky else 0.25 * (ells) ** 4
+        fac = 0.25 * (ells * (ells + 1)) ** 2 if self.full_sky else 0.25 * (ells) ** 4
         return self._get_N0_curl(ellmax) * fac
 
     def _replace_bad_Ls(self, N0):
-        bad_Ls = np.where(N0 <= 0.)[0]
+        bad_Ls = np.where(N0 <= 0.0)[0]
         for L in bad_Ls:
             if L > self.cmb_offset + 1:
-                N0[L] = 0.5 * (N0[L-1] + N0[L+1])
+                N0[L] = 0.5 * (N0[L - 1] + N0[L + 1])
         return N0
 
-    def _get_N0(self, exp, qe, gmv, ps, T_Lmin, T_Lmax, P_Lmin, P_Lmax, iter, iter_ext, data_dir):
-        print(f"Getting cached N0 for exp: {exp}, qe: {qe}, gmv: {gmv}, ps: {ps}, L_cuts: {(T_Lmin, T_Lmax, P_Lmin, P_Lmax)}, iter: {iter}, iter_ext: {iter_ext}, data_dir: {data_dir}")
+    def _get_N0(
+        self, exp, qe, gmv, ps, T_Lmin, T_Lmax, P_Lmin, P_Lmax, iter, iter_ext, data_dir
+    ):
+        print(
+            f"Getting cached N0 for exp: {exp}, qe: {qe}, gmv: {gmv}, ps: {ps}, L_cuts: {(T_Lmin, T_Lmax, P_Lmin, P_Lmax)}, iter: {iter}, iter_ext: {iter_ext}, data_dir: {data_dir}"
+        )
         if iter_ext:
             qe += "_iter_ext"
         elif iter:
@@ -68,9 +76,17 @@ class Noise:
         elif gmv:
             qe += "_gmv"
         sep = getFileSep()
-        dir = f'{data_dir}{sep}N0{sep}{exp}{sep}'
-        N0_phi = np.array(pd.read_csv(dir+f'N0_phi_{ps}_T{T_Lmin}-{T_Lmax}_P{P_Lmin}-{P_Lmax}.csv', sep=' ')[qe])
-        N0_curl = np.array(pd.read_csv(dir+f'N0_curl_{ps}_T{T_Lmin}-{T_Lmax}_P{P_Lmin}-{P_Lmax}.csv', sep=' ')[qe])
+        dir = f"{data_dir}{sep}N0{sep}{exp}{sep}"
+        N0_phi = np.array(
+            pd.read_csv(
+                dir + f"N0_phi_{ps}_T{T_Lmin}-{T_Lmax}_P{P_Lmin}-{P_Lmax}.csv", sep=" "
+            )[qe]
+        )
+        N0_curl = np.array(
+            pd.read_csv(
+                dir + f"N0_curl_{ps}_T{T_Lmin}-{T_Lmax}_P{P_Lmin}-{P_Lmax}.csv", sep=" "
+            )[qe]
+        )
         return N0_phi, N0_curl
 
     def _get_lens_rec_noise_scalings(self, exp):
@@ -82,23 +98,54 @@ class Noise:
             exp = "SO_base"
             ellmax = 5000
             ells = np.arange(2, ellmax + 1)
-            arcmin_to_rad = np.pi/180/60
+            arcmin_to_rad = np.pi / 180 / 60
             theta_new = 7 * arcmin_to_rad
             theta_old = 3 * arcmin_to_rad
-            exponent = lambda beam: ells*(ells+1)*theta_new**2 / (8*np.log(2))
-            scaling_fac = 9*np.exp(exponent(theta_new)-exponent(theta_old))
+            exponent = lambda beam: ells * (ells + 1) * theta_new**2 / (8 * np.log(2))
+            scaling_fac = 9 * np.exp(exponent(theta_new) - exponent(theta_old))
             return exp, scaling_fac
         return exp, 1
 
-    def setup_cmb_noise(self, exp="SO", qe="TEB", gmv=True, ps="gradient", T_Lmin=30, T_Lmax=3000, P_Lmin=30, P_Lmax=5000, iter=False, iter_ext=False, data_dir=omegaqe.DATA_DIR):
-        print(f"Setting up noise...")
+    def setup_cmb_noise(
+        self,
+        exp="SO",
+        qe="TEB",
+        gmv=True,
+        ps="gradient",
+        T_Lmin=30,
+        T_Lmax=3000,
+        P_Lmin=30,
+        P_Lmax=5000,
+        iter=False,
+        iter_ext=False,
+        data_dir=omegaqe.DATA_DIR,
+    ):
+        print("Setting up noise...")
         exp, scaling_fac = self._get_lens_rec_noise_scalings(exp)
-        N0 = self._get_N0(exp, qe, gmv, ps, T_Lmin, T_Lmax, P_Lmin, P_Lmax, iter, iter_ext, data_dir)
+        N0 = self._get_N0(
+            exp, qe, gmv, ps, T_Lmin, T_Lmax, P_Lmin, P_Lmax, iter, iter_ext, data_dir
+        )
         N0_phi = N0[0] * scaling_fac
         N0_curl = N0[1] * scaling_fac
         self.N0 = (N0_phi, N0_curl)
 
-    def get_N0(self, typ, ellmax, exp="SO", qe="TEB", gmv=True, ps="gradient", T_Lmin=30, T_Lmax=3000, P_Lmin=30, P_Lmax=5000, recalc_N0=False, iter=False, iter_ext=False, data_dir=omegaqe.DATA_DIR):
+    def get_N0(
+        self,
+        typ,
+        ellmax,
+        exp="SO",
+        qe="TEB",
+        gmv=True,
+        ps="gradient",
+        T_Lmin=30,
+        T_Lmax=3000,
+        P_Lmin=30,
+        P_Lmax=5000,
+        recalc_N0=False,
+        iter=False,
+        iter_ext=False,
+        data_dir=omegaqe.DATA_DIR,
+    ):
         """
         Extracts the noise from the supplied input file.
 
@@ -119,9 +166,13 @@ class Noise:
             1D array of the noise up to desired ellmax, the indices representing ell - offset.
         """
         if recalc_N0:
-            self.N0 = self._get_N0(exp, qe, gmv, ps, T_Lmin, T_Lmax, P_Lmin, P_Lmax, iter, iter_ext, data_dir)
+            self.N0 = self._get_N0(
+                exp, qe, gmv, ps, T_Lmin, T_Lmax, P_Lmin, P_Lmax, iter, iter_ext, data_dir
+            )
         if self.N0 is None:
-            raise ValueError(f"N0 has not been created, either call setup_cmb_noise or use recalc_N0 argument.")
+            raise ValueError(
+                "N0 has not been created, either call setup_cmb_noise or use recalc_N0 argument."
+            )
         if typ == "phi":
             return self._get_N0_phi(ellmax)
         if typ == "curl":
@@ -138,9 +189,9 @@ class Noise:
         if zmin is not None and zmax is not None:
             fraction = self.cosmo.gal_window_fraction(zmin, zmax)
         n = self.n if n is None else n
-        arcmin2_to_strad = (180/np.pi)**2 * 60**2
+        arcmin2_to_strad = (180 / np.pi) ** 2 * 60**2
         ones = np.ones(ellmax + 1)
-        return ones/(arcmin2_to_strad * n * fraction)
+        return ones / (arcmin2_to_strad * n * fraction)
 
     def get_shape_N(self, n=40, sig=0.21, ellmax=4000, zmin=None, zmax=None):
         return self.get_gal_shot_N(n, ellmax, zmin, zmax) * sig**2
@@ -149,9 +200,10 @@ class Noise:
         # 1309.0382 Table 9
         ones = np.ones(ellmax + 1)
         if nu == 353e9:
-            if self.agora: return 426e-12  # My fit of AGORA cib between ell of 110 and 2000
+            if self.agora:
+                return 426e-12  # My fit of AGORA cib between ell of 110 and 2000
             # N = 262 * 1e-12    # 1e-12 to change units to MJy^2/sr
-            N = 225.6 * 1e-12   # From Toshiya, matching 1705.02332 and 2110.09730
+            N = 225.6 * 1e-12  # From Toshiya, matching 1705.02332 and 2110.09730
         elif nu == 545e9:
             N = 1690 * 1e-12
         elif nu == 857e9:
@@ -165,7 +217,7 @@ class Noise:
             factor = 58
         elif nu == 857e9:
             factor = 2.3
-        return value * 1e-12 * factor ** 2
+        return value * 1e-12 * factor**2
 
     def get_dust_N(self, nu, ellmax=4000):
         # From Toshiya, matching 1705.02332 and 2110.09730
@@ -175,7 +227,7 @@ class Noise:
             A = 0.00029989393
         else:
             return self.get_dust_N_old(nu, ellmax)
-        return A * ells**(-alpha)
+        return A * ells ** (-alpha)
 
     def get_dust_N_old(self, nu, ellmax=4000):
         # 1303.5075 eq 9,
@@ -186,26 +238,30 @@ class Noise:
 
         # return 0.00029989393*ells**(-2.17)
 
-        alpha = 0.169              # parameters from 1303.5075 pg 6
+        alpha = 0.169  # parameters from 1303.5075 pg 6
         l_c = 905
         gamma = 0.427
 
         if nu == 353e9:
-            A = 6e2              # Tuned to match 1705.02332 fig 2 and 3, and 2110.09730 fig 2
+            A = 6e2  # Tuned to match 1705.02332 fig 2 and 3, and 2110.09730 fig 2
         elif nu == 545e9:
-            A = 2e5              # Complete guess
+            A = 2e5  # Complete guess
         elif nu == 857e9:
-            A = 6e8         # from 1303.5075 pg 6
-        D_l = self._microK2_to_MJy2(A, nu) * ((100 / ells) ** alpha / ((1 + (ells / l_c) ** 2) ** (gamma / 2)))
-        N_dust = 2*np.pi * D_l/(ells*(ells+1))
+            A = 6e8  # from 1303.5075 pg 6
+        D_l = self._microK2_to_MJy2(A, nu) * (
+            (100 / ells) ** alpha / ((1 + (ells / l_c) ** 2) ** (gamma / 2))
+        )
+        N_dust = 2 * np.pi * D_l / (ells * (ells + 1))
         N_dust[0] = 0
         return N_dust
 
     def get_dust_N_fit(self, nu, alpha, l_c, gamma, A, ellmax=4000):
         # 1303.5075 eq 9,
         ells = np.arange(ellmax + 1)
-        D_l = self._microK2_to_MJy2(A, nu) * ((100 / ells) ** alpha / ((1 + (ells / l_c) ** 2) ** (gamma / 2)))
-        N_dust = 2*np.pi * D_l/(ells*(ells+1))
+        D_l = self._microK2_to_MJy2(A, nu) * (
+            (100 / ells) ** alpha / ((1 + (ells / l_c) ** 2) ** (gamma / 2))
+        )
+        N_dust = 2 * np.pi * D_l / (ells * (ells + 1))
         N_dust[0] = 0
         return N_dust
 
@@ -240,12 +296,14 @@ class Noise:
         if typ[0] != typ[1]:
             return np.zeros(ellmax + 1)
         sep = getFileSep()
-        dir = f'{data_dir}{sep}N0{sep}{exp}{sep}'
-        N = np.array(pd.read_csv(dir + f'N.csv', sep=' ')[typ[0]])[:ellmax + 1]
+        dir = f"{data_dir}{sep}N0{sep}{exp}{sep}"
+        N = np.array(pd.read_csv(dir + "N.csv", sep=" ")[typ[0]])[: ellmax + 1]
         N = np.concatenate((np.zeros(self.cmb_offset), N))
         return N
 
-    def get_cmb_gaussian_N(self, typ, deltaT=3, beam=3, ellmax=4000, exp="SO", data_dir=omegaqe.DATA_DIR):
+    def get_cmb_gaussian_N(
+        self, typ, deltaT=3, beam=3, ellmax=4000, exp="SO", data_dir=omegaqe.DATA_DIR
+    ):
         """
 
         Parameters
@@ -262,14 +320,18 @@ class Noise:
         if deltaT is None or beam is None:
             return self._get_cached_cmb_gaussian_N(typ, ellmax, exp, data_dir)
 
-        arcmin_to_radians = 0.000290888   #pi/180/60
+        arcmin_to_radians = 0.000290888  # pi/180/60
         deltaT *= arcmin_to_radians
         beam *= arcmin_to_radians
-        T_cmb = 2.7255               #arXiv:0911.1955
-        Ls = np.arange(ellmax+1)
+        T_cmb = 2.7255  # arXiv:0911.1955
+        Ls = np.arange(ellmax + 1)
         if typ == "TT":
-            return (deltaT*1e-6/T_cmb)**2 * np.exp(Ls*(Ls+1)*beam**2/(8*np.log(2)))
+            return (deltaT * 1e-6 / T_cmb) ** 2 * np.exp(
+                Ls * (Ls + 1) * beam**2 / (8 * np.log(2))
+            )
         elif typ == "EE" or typ == "BB":
-            return (deltaT * 1e-6 *np.sqrt(2)/ T_cmb) ** 2 * np.exp(Ls * (Ls + 1) * beam**2 / (8 * np.log(2)))
+            return (deltaT * 1e-6 * np.sqrt(2) / T_cmb) ** 2 * np.exp(
+                Ls * (Ls + 1) * beam**2 / (8 * np.log(2))
+            )
         else:
             return np.zeros(np.size(Ls))

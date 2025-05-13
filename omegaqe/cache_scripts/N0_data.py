@@ -21,11 +21,14 @@ def save_N0(exps, powerspectra, single_fields, gmv_fields, L_cuts, convert=False
             for iii, col in enumerate(columns):
                 typ = "single" if iii < np.size(single_fields) else "gmv"
                 fields = col
-                N0_phi, N0_curl = np.load(f"{cache_dir}{sep}_N0{sep}{exp}{sep}{typ}{sep}N0_{fields}_{ps}_T{L_cuts[0]}-{L_cuts[1]}_P{L_cuts[2]}-{L_cuts[3]}.npy")
-                if typ == "gmv": col += "_gmv"
+                N0_phi, N0_curl = np.load(
+                    f"{cache_dir}{sep}_N0{sep}{exp}{sep}{typ}{sep}N0_{fields}_{ps}_T{L_cuts[0]}-{L_cuts[1]}_P{L_cuts[2]}-{L_cuts[3]}.npy"
+                )
+                if typ == "gmv":
+                    col += "_gmv"
                 if convert:
-                    df_phi[col] = N0_phi*4/(Ls**4)
-                    df_curl[col] = N0_curl*4/(Ls**4)
+                    df_phi[col] = N0_phi * 4 / (Ls**4)
+                    df_curl[col] = N0_curl * 4 / (Ls**4)
                 else:
                     df_phi[col] = N0_phi
                     df_curl[col] = N0_curl
@@ -33,9 +36,18 @@ def save_N0(exps, powerspectra, single_fields, gmv_fields, L_cuts, convert=False
             if not os.path.isdir(dir):
                 os.makedirs(dir)
             df_phi.set_index("Ls", inplace=True)
-            df_phi.to_csv(f"{dir}{sep}N0_phi_{ps}_T{L_cuts[0]}-{L_cuts[1]}_P{L_cuts[2]}-{L_cuts[3]}.csv", sep=" ", float_format='{:,.6e}'.format)
+            df_phi.to_csv(
+                f"{dir}{sep}N0_phi_{ps}_T{L_cuts[0]}-{L_cuts[1]}_P{L_cuts[2]}-{L_cuts[3]}.csv",
+                sep=" ",
+                float_format="{:,.6e}".format,
+            )
             df_curl.set_index("Ls", inplace=True)
-            df_curl.to_csv(f"{dir}{sep}N0_curl_{ps}_T{L_cuts[0]}-{L_cuts[1]}_P{L_cuts[2]}-{L_cuts[3]}.csv", sep=" ", float_format='{:,.6e}'.format)
+            df_curl.to_csv(
+                f"{dir}{sep}N0_curl_{ps}_T{L_cuts[0]}-{L_cuts[1]}_P{L_cuts[2]}-{L_cuts[3]}.csv",
+                sep=" ",
+                float_format="{:,.6e}".format,
+            )
+
 
 def save_N(exps, fields):
     columns = np.array(fields)
@@ -44,13 +56,16 @@ def save_N(exps, fields):
         df_N = pd.DataFrame(data=np.hstack((Ls[:, None])), columns=["Ls"])
         for iii, col in enumerate(columns):
             field = col
-            N = np.load(f"{cache_dir}{sep}_N0{sep}{exp}{sep}exp{sep}N_{field}{field}.npy")[2:5001]
+            N = np.load(
+                f"{cache_dir}{sep}_N0{sep}{exp}{sep}exp{sep}N_{field}{field}.npy"
+            )[2:5001]
             df_N[col] = N
         dir = f"{data_dir}{sep}N0{sep}{exp}"
         if not os.path.isdir(dir):
             os.makedirs(dir)
         df_N.set_index("Ls", inplace=True)
-        df_N.to_csv(f"{dir}{sep}N.csv", sep=" ", float_format='{:,.6e}'.format)
+        df_N.to_csv(f"{dir}{sep}N.csv", sep=" ", float_format="{:,.6e}".format)
+
 
 def main():
     # single_fields = ["TT", "TE", "TB", "EE", "EB"]
@@ -58,7 +73,7 @@ def main():
     # gmv_fields = ["TE", "EB", "TEB"]
     gmv_fields = ["TEB", "EB"]
     # exps = np.array(["SO", "SO_base", "SO_goal","S4", "S4_base", "HD"])
-    exps = np.array(["SO_goal","S4_base"])
+    exps = np.array(["SO_goal", "S4_base"])
     powerspectra = ["gradient"]
     save_N0(exps, powerspectra, single_fields, gmv_fields, (30, 3000, 30, 5000))
     # exps = np.array(["SO_base", "SO_goal", "S4_base"])
@@ -74,6 +89,5 @@ def main():
     # save_N0(["S4_dp"], ["gradient"], ["TT"], ["EB", "TEB"], (30, 3000, 30, 5000))
 
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     main()

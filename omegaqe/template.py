@@ -4,8 +4,20 @@ import datetime
 
 
 class Template:
-
-    def __init__(self, fields, Lmin=30, Lmax=3000, F_L_spline=None, C_inv_spline=None, tracer_noise=False, use_kappa_rec=False, kappa_rec_qe_typ="TEB", gaussCMB=False, diffCMBs=False, diffCMBs_offset=1):
+    def __init__(
+        self,
+        fields,
+        Lmin=30,
+        Lmax=3000,
+        F_L_spline=None,
+        C_inv_spline=None,
+        tracer_noise=False,
+        use_kappa_rec=False,
+        kappa_rec_qe_typ="TEB",
+        gaussCMB=False,
+        diffCMBs=False,
+        diffCMBs_offset=1,
+    ):
         self.Lmin = Lmin
         self.Lmax = Lmax
         self.fields = fields
@@ -16,11 +28,25 @@ class Template:
         self._cosmo = self._power.cosmo
         self.L_map = self.fields.kM
         self.Lx_map, self.Ly_map = self._get_Lx_Ly_maps()
-        self.F_L_spline, self.C_inv_spline = self._get_F_L_and_C_inv_splines(F_L_spline, C_inv_spline)
+        self.F_L_spline, self.C_inv_spline = self._get_F_L_and_C_inv_splines(
+            F_L_spline, C_inv_spline
+        )
         self.matter_PK = self._cosmo.get_matter_PK(typ="matter")
         self.a_bars = dict.fromkeys(self.fields.fields)
         self.use_kappa_rec = use_kappa_rec
-        self.kappa_rec = self.fields.get_kappa_rec(kappa_rec_qe_typ, include_noise=tracer_noise, phi_idx=None, iter_rec=False, gaussCMB=gaussCMB, diffSims=diffCMBs, diffSim_offset=diffCMBs_offset) if use_kappa_rec else None
+        self.kappa_rec = (
+            self.fields.get_kappa_rec(
+                kappa_rec_qe_typ,
+                include_noise=tracer_noise,
+                phi_idx=None,
+                iter_rec=False,
+                gaussCMB=gaussCMB,
+                diffSims=diffCMBs,
+                diffSim_offset=diffCMBs_offset,
+            )
+            if use_kappa_rec
+            else None
+        )
         self._populate_a_bars(tracer_noise)
 
     def _get_fft_maps(self, field, include_noise):
@@ -42,8 +68,19 @@ class Template:
         if F_L_spline is not None and C_inv_spline is not None:
             return F_L_spline, C_inv_spline
         # TODO: F_L below is always omega, so won't work for kappa
-        sample_Ls = self._fish.covariance.get_log_sample_Ls(Lmin=2, Lmax=self.Lmax_map, Nells=300)
-        sample_Ls, F_L, C_inv = self._fish.get_F_L(self.fields.fields, Ls=sample_Ls, dL2=2, Ntheta=2000, nu=353e9, return_C_inv=True, Lmin=self.Lmin, Lmax=self.Lmax)
+        sample_Ls = self._fish.covariance.get_log_sample_Ls(
+            Lmin=2, Lmax=self.Lmax_map, Nells=300
+        )
+        sample_Ls, F_L, C_inv = self._fish.get_F_L(
+            self.fields.fields,
+            Ls=sample_Ls,
+            dL2=2,
+            Ntheta=2000,
+            nu=353e9,
+            return_C_inv=True,
+            Lmin=self.Lmin,
+            Lmax=self.Lmax,
+        )
         F_L_spline = InterpolatedUnivariateSpline(sample_Ls, F_L)
         N_fields = np.size(self.fields.fields)
         C_inv_splines = np.empty((N_fields, N_fields), dtype=InterpolatedUnivariateSpline)
@@ -51,27 +88,35 @@ class Template:
         for iii in range(N_fields):
             for jjj in range(N_fields):
                 C_inv_ij = C_inv[iii, jjj]
-                C_inv_ij[self.Lmax + 1:] = 0
-                C_inv_ij[:self.Lmin] = 0
+                C_inv_ij[self.Lmax + 1 :] = 0
+                C_inv_ij[: self.Lmin] = 0
                 C_inv_splines[iii, jjj] = InterpolatedUnivariateSpline(Ls, C_inv_ij)
         return F_L_spline, C_inv_splines
 
     def _get_Cl_and_window(self, Chi, field, nu=353e9, gal_distro="LSST_gold"):
         Ls_sample = np.arange(1, self.Lmax_map)
         if field == "k":
-            Cl_sample = self._power.get_kappa_ps_2source(Ls_sample, Chi, self._cosmo.get_chi_star(), use_weyl=False)
+            Cl_sample = self._power.get_kappa_ps_2source(
+                Ls_sample, Chi, self._cosmo.get_chi_star(), use_weyl=False
+            )
             Cl_spline = InterpolatedUnivariateSpline(Ls_sample, Cl_sample)
             Cl = Cl_spline(self.L_map)
-            window = self._cosmo.cmb_lens_window_matter(Chi, self._cosmo.get_chi_star(), False)
+            window = self._cosmo.cmb_lens_window_matter(
+                Chi, self._cosmo.get_chi_star(), False
+            )
             return Cl, window
         if field == "g":
-            Cl_sample = self._power.get_gal_kappa_ps(Ls_sample, Chi, gal_distro=gal_distro, use_weyl=False)
+            Cl_sample = self._power.get_gal_kappa_ps(
+                Ls_sample, Chi, gal_distro=gal_distro, use_weyl=False
+            )
             Cl_spline = InterpolatedUnivariateSpline(Ls_sample, Cl_sample)
             Cl = Cl_spline(self.L_map)
             window = self._cosmo.gal_window_Chi(Chi)
             return Cl, window
         if field == "I":
-            Cl_sample = self._power.get_cib_kappa_ps(Ls_sample, nu=nu, Chi_source1=Chi, use_weyl=False)
+            Cl_sample = self._power.get_cib_kappa_ps(
+                Ls_sample, nu=nu, Chi_source1=Chi, use_weyl=False
+            )
             Cl_spline = InterpolatedUnivariateSpline(Ls_sample, Cl_sample)
             Cl = Cl_spline(self.L_map)
             window = self._cosmo.cib_window_Chi(Chi, nu)
@@ -97,14 +142,13 @@ class Template:
         L_r = self._L_comp_map(r)
         L_map_inv = 1 / self.L_map
         L_map_inv[L_map_inv == np.inf] = 0
-        return L_p * L_r * L_map_inv ** 2
-
+        return L_p * L_r * L_map_inv**2
 
     def _get_L_facs_rd(self, p):
         L_p = self._L_comp_map(p)
         L_map_inv = 1 / self.L_map
         L_map_inv[L_map_inv == np.inf] = 0
-        return L_p, L_p * L_map_inv ** 2
+        return L_p, L_p * L_map_inv**2
 
     def _get_f_g(self, p, r, q, s, Cls, windows, matter_ps):
         L_fac_f = self._get_L_fac(p, r)
@@ -115,7 +159,6 @@ class Template:
             h_f += windows[field_i] * self.a_bars[field_i]
             h_g += Cls[field_i] * self.a_bars[field_i]
         return L_fac_f * h_f * matter_ps, L_fac_g * h_g
-
 
     def _get_f_g_rd(self, p, Cls, windows, matter_ps):
         L_fac_f, L_fac_g = self._get_L_facs_rd(p)
@@ -137,7 +180,9 @@ class Template:
     def _get_matter_ps(self, Chi):
         z = self._cosmo.Chi_to_z(Chi)
         ks = self.L_map / Chi
-        return self._cosmo.get_matter_ps(self.matter_PK, z, ks, weyl_scaled=False, typ="matter")
+        return self._cosmo.get_matter_ps(
+            self.matter_PK, z, ks, weyl_scaled=False, typ="matter"
+        )
 
     def get_omega(self, Nchi=200):
         norm = "forward"
@@ -149,14 +194,16 @@ class Template:
         r = 1
         s = 0
         t0 = datetime.datetime.now()
-        print(f"[00:00] {0}%", end='')
+        print(f"[00:00] {0}%", end="")
         for Chi_i, Chi in enumerate(Chis):
             Cls = dict.fromkeys(self.fields.fields)
             windows = dict.fromkeys(self.fields.fields)
             matter_ps = self._get_matter_ps(Chi)
             for field in self.fields.fields:
                 Cls[field], windows[field] = self._get_Cl_and_window(Chi, field)
-            I_tmp = np.zeros((np.shape(self.L_map)[0], np.shape(self.L_map)[0]), dtype="complex128")
+            I_tmp = np.zeros(
+                (np.shape(self.L_map)[0], np.shape(self.L_map)[0]), dtype="complex128"
+            )
             for p in range(2):
                 q = p
                 f_i, g_j = self._get_f_g(p, r, q, s, Cls, windows, matter_ps)
@@ -167,11 +214,14 @@ class Template:
                 G_i = np.fft.irfft2(g_i, norm=norm)
                 I_tmp += (F_i * G_j) - (F_j * G_i)
             window_k = self._get_window_k(Chi)
-            I += 2 * np.fft.rfft2(I_tmp, norm=norm) / (Chi ** 2) * window_k
-            print('\r', end='')
-            print(f"[{str(datetime.datetime.now() - t0)[:-7]}] {int((Chi_i+1)/Nchi * 100)}%", end='')
+            I += 2 * np.fft.rfft2(I_tmp, norm=norm) / (Chi**2) * window_k
+            print("\r", end="")
+            print(
+                f"[{str(datetime.datetime.now() - t0)[:-7]}] {int((Chi_i + 1) / Nchi * 100)}%",
+                end="",
+            )
         print("")
-        return - I * dChi * dL / self.F_L_spline(self.L_map) / ((2 * np.pi) ** 2)
+        return -I * dChi * dL / self.F_L_spline(self.L_map) / ((2 * np.pi) ** 2)
 
     def get_omega_Pmethod(self, Nchi=200):
         norm = "forward"
@@ -181,29 +231,40 @@ class Template:
         dChi = Chis[1] - Chis[0]
         I = np.zeros((np.shape(self.L_map)), dtype="complex128")
         t0 = datetime.datetime.now()
-        print(f"[00:00] {0}%", end='')
+        print(f"[00:00] {0}%", end="")
         for Chi_i, Chi in enumerate(Chis):
             Cls = dict.fromkeys(self.fields.fields)
             windows = dict.fromkeys(self.fields.fields)
             matter_ps = self._get_matter_ps(Chi)
             for field in self.fields.fields:
                 Cls[field], windows[field] = self._get_Cl_and_window(Chi, field)
-            I_tmp = np.zeros((np.shape(self.L_map)[0], np.shape(self.L_map)[0]), dtype="complex128")
+            I_tmp = np.zeros(
+                (np.shape(self.L_map)[0], np.shape(self.L_map)[0]), dtype="complex128"
+            )
             E_gamma, E_lambda = self._get_Egamma_Elambda(Cls, windows, matter_ps)
             B_gamma = np.zeros(np.shape(E_gamma))
             B_lambda = np.zeros(np.shape(E_lambda))
             Q_gamma, U_gamma = self.fields.EB_to_QU(E_gamma, B_gamma)
-            Q_gamma, U_gamma = np.fft.irfft2(Q_gamma, norm=norm), np.fft.irfft2(U_gamma, norm=norm)
+            Q_gamma, U_gamma = (
+                np.fft.irfft2(Q_gamma, norm=norm),
+                np.fft.irfft2(U_gamma, norm=norm),
+            )
             Q_lambda, U_lambda = self.fields.EB_to_QU(E_lambda, B_lambda)
-            Q_lambda, U_lambda = np.fft.irfft2(Q_lambda, norm=norm), np.fft.irfft2(U_lambda, norm=norm)
+            Q_lambda, U_lambda = (
+                np.fft.irfft2(Q_lambda, norm=norm),
+                np.fft.irfft2(U_lambda, norm=norm),
+            )
             I_tmp += (Q_gamma * U_lambda) - (Q_lambda * U_gamma)
 
             window_k = self._get_window_k(Chi)
-            I += np.fft.rfft2(I_tmp, norm=norm) / (Chi ** 2) * window_k
-            print('\r', end='')
-            print(f"[{str(datetime.datetime.now() - t0)[:-7]}] {int((Chi_i+1)/Nchi * 100)}%", end='')
+            I += np.fft.rfft2(I_tmp, norm=norm) / (Chi**2) * window_k
+            print("\r", end="")
+            print(
+                f"[{str(datetime.datetime.now() - t0)[:-7]}] {int((Chi_i + 1) / Nchi * 100)}%",
+                end="",
+            )
         print("")
-        return - I * dChi * dL / self.F_L_spline(self.L_map) / ((2 * np.pi) ** 2)
+        return -I * dChi * dL / self.F_L_spline(self.L_map) / ((2 * np.pi) ** 2)
 
     def get_kappa_pB(self, Nchi=200, typ="pB"):
         include_ll = True
@@ -219,14 +280,16 @@ class Template:
         dChi = Chis[1] - Chis[0]
         I = np.zeros((np.shape(self.L_map)), dtype="complex128")
         t0 = datetime.datetime.now()
-        print(f"[00:00] {0}%", end='')
+        print(f"[00:00] {0}%", end="")
         for Chi_i, Chi in enumerate(Chis):
             Cls = dict.fromkeys(self.fields.fields)
             windows = dict.fromkeys(self.fields.fields)
             matter_ps = self._get_matter_ps(Chi)
             for field in self.fields.fields:
                 Cls[field], windows[field] = self._get_Cl_and_window(Chi, field)
-            I_tmp = np.zeros((np.shape(self.L_map)[0], np.shape(self.L_map)[0]), dtype="complex128")
+            I_tmp = np.zeros(
+                (np.shape(self.L_map)[0], np.shape(self.L_map)[0]), dtype="complex128"
+            )
             for p in range(2):
                 f_rd, g_rd = self._get_f_g_rd(p, Cls, windows, matter_ps)
                 F_rd = np.fft.irfft2(f_rd, norm=norm)
@@ -240,11 +303,14 @@ class Template:
                     if include_ll:
                         I_tmp += F_ll * G_ll
             window_k = self._get_window_k(Chi)
-            I += 2 * np.fft.rfft2(I_tmp, norm=norm) / (Chi ** 2) * window_k
-            print('\r', end='')
-            print(f"[{str(datetime.datetime.now() - t0)[:-7]}] {int((Chi_i+1)/Nchi * 100)}%", end='')
+            I += 2 * np.fft.rfft2(I_tmp, norm=norm) / (Chi**2) * window_k
+            print("\r", end="")
+            print(
+                f"[{str(datetime.datetime.now() - t0)[:-7]}] {int((Chi_i + 1) / Nchi * 100)}%",
+                end="",
+            )
         print("")
-        return - I * dChi * dL / self.F_L_spline(self.L_map) / ((2 * np.pi) ** 2)
+        return -I * dChi * dL / self.F_L_spline(self.L_map) / ((2 * np.pi) ** 2)
 
     def get_kappa_pB_Pmethod(self, Nchi=200, typ="pB"):
         include_ll = True
@@ -262,36 +328,58 @@ class Template:
         dChi = Chis[1] - Chis[0]
         I = np.zeros((np.shape(self.L_map)), dtype="complex128")
         t0 = datetime.datetime.now()
-        print(f"[00:00] {0}%", end='')
+        print(f"[00:00] {0}%", end="")
         for Chi_i, Chi in enumerate(Chis):
             Cls = dict.fromkeys(self.fields.fields)
             windows = dict.fromkeys(self.fields.fields)
             matter_ps = self._get_matter_ps(Chi)
             for field in self.fields.fields:
                 Cls[field], windows[field] = self._get_Cl_and_window(Chi, field)
-            I_tmp = np.zeros((np.shape(self.L_map)[0], np.shape(self.L_map)[0]), dtype="complex128")
+            I_tmp = np.zeros(
+                (np.shape(self.L_map)[0], np.shape(self.L_map)[0]), dtype="complex128"
+            )
             E_gamma, E_lambda = self._get_Egamma_Elambda(Cls, windows, matter_ps)
             B_gamma = np.zeros(np.shape(E_gamma))
             B_lambda = np.zeros(np.shape(E_lambda))
             if include_ll:
                 Q_gamma, U_gamma = self.fields.EB_to_QU(E_gamma, B_gamma)
-                Q_gamma, U_gamma = np.fft.irfft2(Q_gamma, norm=norm), np.fft.irfft2(U_gamma, norm=norm)
+                Q_gamma, U_gamma = (
+                    np.fft.irfft2(Q_gamma, norm=norm),
+                    np.fft.irfft2(U_gamma, norm=norm),
+                )
                 Q_lambda, U_lambda = self.fields.EB_to_QU(E_lambda, B_lambda)
-                Q_lambda, U_lambda = np.fft.irfft2(Q_lambda, norm=norm), np.fft.irfft2(U_lambda, norm=norm)
+                Q_lambda, U_lambda = (
+                    np.fft.irfft2(Q_lambda, norm=norm),
+                    np.fft.irfft2(U_lambda, norm=norm),
+                )
                 I_tmp += (Q_gamma * Q_lambda) + (U_lambda * U_gamma)
 
-                I_tmp += np.fft.irfft2(E_gamma, norm=norm) * np.fft.irfft2(E_lambda, norm=norm)
+                I_tmp += np.fft.irfft2(E_gamma, norm=norm) * np.fft.irfft2(
+                    E_lambda, norm=norm
+                )
             if include_rd:
-                Q_gamma, U_gamma = self.fields.EB_to_QU(self.L_map * E_gamma, B_gamma, spin=1)
-                Q_gamma, U_gamma = np.fft.irfft2(Q_gamma, norm=norm), np.fft.irfft2(U_gamma, norm=norm)
-                Q_lambda, U_lambda = self.fields.EB_to_QU(L_map_inv * E_lambda, B_lambda, spin=1)
-                Q_lambda, U_lambda = np.fft.irfft2(Q_lambda, norm=norm), np.fft.irfft2(U_lambda, norm=norm)
+                Q_gamma, U_gamma = self.fields.EB_to_QU(
+                    self.L_map * E_gamma, B_gamma, spin=1
+                )
+                Q_gamma, U_gamma = (
+                    np.fft.irfft2(Q_gamma, norm=norm),
+                    np.fft.irfft2(U_gamma, norm=norm),
+                )
+                Q_lambda, U_lambda = self.fields.EB_to_QU(
+                    L_map_inv * E_lambda, B_lambda, spin=1
+                )
+                Q_lambda, U_lambda = (
+                    np.fft.irfft2(Q_lambda, norm=norm),
+                    np.fft.irfft2(U_lambda, norm=norm),
+                )
                 I_tmp += 2 * ((Q_gamma * Q_lambda) + (U_lambda * U_gamma))
 
             window_k = self._get_window_k(Chi)
-            I += np.fft.rfft2(I_tmp, norm=norm) / (Chi ** 2) * window_k
-            print('\r', end='')
-            print(f"[{str(datetime.datetime.now() - t0)[:-7]}] {int((Chi_i + 1) / Nchi * 100)}%", end='')
+            I += np.fft.rfft2(I_tmp, norm=norm) / (Chi**2) * window_k
+            print("\r", end="")
+            print(
+                f"[{str(datetime.datetime.now() - t0)[:-7]}] {int((Chi_i + 1) / Nchi * 100)}%",
+                end="",
+            )
         print("")
-        return - I * dChi * dL / self.F_L_spline(self.L_map) / ((2 * np.pi) ** 2)
-
+        return -I * dChi * dL / self.F_L_spline(self.L_map) / ((2 * np.pi) ** 2)

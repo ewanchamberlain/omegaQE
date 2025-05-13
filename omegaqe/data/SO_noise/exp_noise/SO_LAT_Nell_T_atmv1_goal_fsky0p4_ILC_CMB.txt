@@ -1,14 +1,14 @@
 #  SO LAT noise power spectra: post-component separation noise for CMB T
 #  goal sensitivity
-#  fsky = 0.4 
-#  temperature (TT) 
-#  units = uK^2 
-#  ell_min = 40 
-#  ell_max = 7979 
-#  Deproj-0: standard ILC 
-#  Deproj-1: tSZ deprojection (constrained ILC) 
-#  Deproj-2: fiducial CIB deprojection (constrained ILC) 
-#  Deproj-3: tSZ and fiducial CIB deprojection (constrained ILC) 
+#  fsky = 0.4
+#  temperature (TT)
+#  units = uK^2
+#  ell_min = 40
+#  ell_max = 7979
+#  Deproj-0: standard ILC
+#  Deproj-1: tSZ deprojection (constrained ILC)
+#  Deproj-2: fiducial CIB deprojection (constrained ILC)
+#  Deproj-3: tSZ and fiducial CIB deprojection (constrained ILC)
 #  columns: [ell] [Deproj-0] [Deproj-1] [Deproj-2] [Deproj-3]
 40 1.02332e-04 1.02332e-04 1.02332e-04 1.16988e-04
 41 1.02326e-04 1.02326e-04 1.02326e-04 1.33735e-04

@@ -2,9 +2,23 @@ import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 import datetime
 
-class Template:
 
-    def __init__(self, fields, Lmin=30, Lmax=3000, tracer_noise=False, use_kappa_rec=False, cmb_lens_qe_typ="TEB", neg_tracers=False, iter_mc_corr=False, gmv=True, bh=None, cmb_noise=True, F_L_spline=None):
+class Template:
+    def __init__(
+        self,
+        fields,
+        Lmin=30,
+        Lmax=3000,
+        tracer_noise=False,
+        use_kappa_rec=False,
+        cmb_lens_qe_typ="TEB",
+        neg_tracers=False,
+        iter_mc_corr=False,
+        gmv=True,
+        bh=None,
+        cmb_noise=True,
+        F_L_spline=None,
+    ):
         self.Lmin = Lmin
         self.Lmax = Lmax
         self.fields = fields
@@ -17,7 +31,7 @@ class Template:
         self._power = self.fields.nbody.power
         self._fish.covariance.power = self._power
         self._fish.power = self._power
-        self._fish.covariance.noise.full_sky=True
+        self._fish.covariance.noise.full_sky = True
         self._cosmo = self._power.cosmo
         self.F_L, self.C_inv = self._get_F_L_and_C_inv(cmb_lens_qe_typ, F_L_spline)
         self.matter_PK = self.fields.nbody.get_PK()
@@ -26,27 +40,35 @@ class Template:
         if self.use_kappa_rec:
             print(f"Using reconstructed kappa (QE: {cmb_lens_qe_typ}) in template.")
             if "_iter" in cmb_lens_qe_typ:
-                iter=True
-                mc_corr = self._get_iter_mc_corr_k(self.fields.exp, cmb_lens_qe_typ, gmv) if iter_mc_corr else np.ones(self.Lmax_map+1)
+                iter = True
+                mc_corr = (
+                    self._get_iter_mc_corr_k(self.fields.exp, cmb_lens_qe_typ, gmv)
+                    if iter_mc_corr
+                    else np.ones(self.Lmax_map + 1)
+                )
                 cmb_lens_qe_typ = cmb_lens_qe_typ[:-5]
             else:
-                iter=False
-                mc_corr = np.ones(self.Lmax_map+1)
-            self.kappa_rec = self.fields.get_kappa_rec(cmb_lens_qe_typ, fft=True, iter=iter, gmv=gmv, bh=bh, cmb_noise=cmb_noise)
-            self.kappa_rec = self.sht.almxfl(self.kappa_rec, 1/mc_corr)
+                iter = False
+                mc_corr = np.ones(self.Lmax_map + 1)
+            self.kappa_rec = self.fields.get_kappa_rec(
+                cmb_lens_qe_typ, fft=True, iter=iter, gmv=gmv, bh=bh, cmb_noise=cmb_noise
+            )
+            self.kappa_rec = self.sht.almxfl(self.kappa_rec, 1 / mc_corr)
         self._populate_a_bars(tracer_noise, neg_tracers)
-    
+
     def _get_iter_mc_corr_k(self, exp, qe_typ, gmv):
-        offset=10
-        nbins=50
-        dir_loc = f"{self.fields.nbody.cache_dir}/_iter_norm/{exp}/{qe_typ}/{offset}_{nbins}"
+        offset = 10
+        nbins = 50
+        dir_loc = (
+            f"{self.fields.nbody.cache_dir}/_iter_norm/{exp}/{qe_typ}/{offset}_{nbins}"
+        )
         ext = "_gmv" if gmv else ""
         return np.load(f"{dir_loc}/iter_norm_k{ext}.npy")
 
     def _get_F_L_and_C_inv(self, cmb_lens_qe_typ, F_L_spline=None):
         if cmb_lens_qe_typ == "T":
-                qe_typ = "single"
-                fields = "TT"
+            qe_typ = "single"
+            fields = "TT"
         elif cmb_lens_qe_typ == "TEB" or cmb_lens_qe_typ == "EB":
             qe_typ = "gmv"
             fields = cmb_lens_qe_typ
@@ -60,20 +82,26 @@ class Template:
             qe_typ = "single_iter"
             fields = "TT"
         else:
-            raise ValueError(f"Supplied cmb_lens_qe_typ {cmb_lens_qe_typ} not of supported typs; T, EB, TEB, TEB_iter, EB_iter, T_iter")
+            raise ValueError(
+                f"Supplied cmb_lens_qe_typ {cmb_lens_qe_typ} not of supported typs; T, EB, TEB, TEB_iter, EB_iter, T_iter"
+            )
 
         if F_L_spline is not None:
-            Ls_sample = np.arange(self.Lmax_map+1)
+            Ls_sample = np.arange(self.Lmax_map + 1)
             F_L = F_L_spline(Ls_sample)
         else:
             filename_ext = f"_u{self.fields.u_typ}" if "u" in self.fields.fields else ""
-            Ls = np.load(f"{self.fields.nbody.cache_dir}/_F_L/{self.lss_fields}/{self.fields.exp}/{qe_typ}/{fields}/30_3000/1_2000/Ls{filename_ext}.npy")
-            F_L = np.load(f"{self.fields.nbody.cache_dir}/_F_L/{self.lss_fields}/{self.fields.exp}/{qe_typ}/{fields}/30_3000/1_2000/F_L{filename_ext}.npy")
+            Ls = np.load(
+                f"{self.fields.nbody.cache_dir}/_F_L/{self.lss_fields}/{self.fields.exp}/{qe_typ}/{fields}/30_3000/1_2000/Ls{filename_ext}.npy"
+            )
+            F_L = np.load(
+                f"{self.fields.nbody.cache_dir}/_F_L/{self.lss_fields}/{self.fields.exp}/{qe_typ}/{fields}/30_3000/1_2000/F_L{filename_ext}.npy"
+            )
             F_L_spline = InterpolatedUnivariateSpline(Ls, F_L)
-            Ls_sample = np.arange(self.Lmax_map+1)
+            Ls_sample = np.arange(self.Lmax_map + 1)
             F_L = F_L_spline(Ls_sample)
-        
-        # # tmp 
+
+        # # tmp
         # C_omega_old = np.load(f"{self.fields.nbody.cache_dir}/_C_omega/C_omega.npy")
         # omega_Ls_old = np.load(f"{self.fields.nbody.cache_dir}/_C_omega/Ls.npy")
         # C_omega = self.fields.nbody.sht.map2cl(self.fields.nbody.get_omega_map(), smoothing_nbins=150)  #tmp
@@ -81,18 +109,20 @@ class Template:
         # fac = InterpolatedUnivariateSpline(omega_Ls, C_omega_old/C_omega)(Ls)
         # F_L *= fac
 
-        iter=True if "_iter" in qe_typ else False 
-        self.fields.setup_noise(qe=fields, iter=iter, gmv=qe_typ!="single")
+        iter = True if "_iter" in qe_typ else False
+        self.fields.setup_noise(qe=fields, iter=iter, gmv=qe_typ != "single")
         gal_distro = "agora" if self._cosmo.agora else "LSST_gold"
-        C_inv = self._fish.covariance.get_C_inv(self.lss_fields, self.Lmax_map, nu=353e9, gal_distro=gal_distro)
-        
+        C_inv = self._fish.covariance.get_C_inv(
+            self.lss_fields, self.Lmax_map, nu=353e9, gal_distro=gal_distro
+        )
+
         N_fields = len(self.lss_fields)
         C_invs = np.empty((N_fields, N_fields, np.size(F_L)))
         for iii in range(N_fields):
             for jjj in range(N_fields):
                 C_inv_ij = C_inv[iii, jjj]
-                C_inv_ij[self.Lmax + 1:] = 0
-                C_inv_ij[:self.Lmin] = 0
+                C_inv_ij[self.Lmax + 1 :] = 0
+                C_inv_ij[: self.Lmin] = 0
                 C_invs[iii, jjj] = C_inv_ij
         return F_L, C_invs
 
@@ -101,21 +131,28 @@ class Template:
             return self.kappa_rec
         factor = -1 if neg_tracers else 1
         if include_noise:
-            return (factor * self.fields.fft_maps[field]) + self.fields.fft_noise_maps[field]
+            return (factor * self.fields.fft_maps[field]) + self.fields.fft_noise_maps[
+                field
+            ]
         return factor * self.fields.fft_maps[field]
 
     def _populate_a_bars(self, tracer_noise, neg_tracers):
         print(f"Creating filtered maps for template. Noise included: {tracer_noise}.")
         for iii, field_i in enumerate(self.fields.fields):
             if tracer_noise:
-                print(f"Recreating tracer noise maps incase fisher env has changed.")
-                self.fields.fft_noise_maps[field_i] = self.fields.get_noise_map(field_i, set_seed=True, fft=True)
-            a_bar_i = np.zeros(np.shape(self._get_fft_maps('k', tracer_noise, neg_tracers)), dtype="complex128")
+                print("Recreating tracer noise maps incase fisher env has changed.")
+                self.fields.fft_noise_maps[field_i] = self.fields.get_noise_map(
+                    field_i, set_seed=True, fft=True
+                )
+            a_bar_i = np.zeros(
+                np.shape(self._get_fft_maps("k", tracer_noise, neg_tracers)),
+                dtype="complex128",
+            )
             for jjj, field_j in enumerate(self.fields.fields):
                 a_j = self._get_fft_maps(field_j, tracer_noise, neg_tracers)
                 a_bar_i += self.sht.almxfl(a_j, self.C_inv[iii, jjj])
             a_bar_field = field_i.replace("u", "g")
-            a_bar_field = field_i.replace("r", "g")   # TODO: this is typo? fix?
+            a_bar_field = field_i.replace("r", "g")  # TODO: this is typo? fix?
             self.a_bars[a_bar_field] = a_bar_i
 
     def _get_Cl_and_window(self, Chi, field, nu=353e9, gal_distro="LSST_gold"):
@@ -123,13 +160,21 @@ class Template:
         Cl_sample = np.zeros(self.Lmax_map + 1)
         window = None
         if field == "k":
-            Cl_sample[1:] = self._power.get_kappa_ps_2source(Ls_sample, Chi, self._cosmo.get_chi_star(), use_weyl=False)
-            window = self._cosmo.cmb_lens_window_matter(Chi, self._cosmo.get_chi_star(), False)
+            Cl_sample[1:] = self._power.get_kappa_ps_2source(
+                Ls_sample, Chi, self._cosmo.get_chi_star(), use_weyl=False
+            )
+            window = self._cosmo.cmb_lens_window_matter(
+                Chi, self._cosmo.get_chi_star(), False
+            )
         if field == "g":
-            Cl_sample[1:] = self._power.get_gal_kappa_ps(Ls_sample, Chi, gal_distro=gal_distro, use_weyl=False)
+            Cl_sample[1:] = self._power.get_gal_kappa_ps(
+                Ls_sample, Chi, gal_distro=gal_distro, use_weyl=False
+            )
             window = self._cosmo.gal_window_Chi(Chi, typ=gal_distro)
         if field == "I":
-            Cl_sample[1:] = self._power.get_cib_kappa_ps(Ls_sample, nu=nu, Chi_source1=Chi, use_weyl=False)
+            Cl_sample[1:] = self._power.get_cib_kappa_ps(
+                Ls_sample, nu=nu, Chi_source1=Chi, use_weyl=False
+            )
             window = self._cosmo.cib_window_Chi(Chi, nu)
         return Cl_sample, window
 
@@ -138,9 +183,11 @@ class Template:
 
     def _get_matter_ps(self, Chi):
         z = self._cosmo.Chi_to_z(Chi)
-        ks_sample = np.arange(1, self.Lmax_map+1) / Chi   #This make sense in full sky?
-        P_m = np.zeros(self.Lmax_map+1)
-        P_m[1:] = self._cosmo.get_matter_ps(self.matter_PK, z, ks_sample, weyl_scaled=False, typ="matter")
+        ks_sample = np.arange(1, self.Lmax_map + 1) / Chi  # This make sense in full sky?
+        P_m = np.zeros(self.Lmax_map + 1)
+        P_m[1:] = self._cosmo.get_matter_ps(
+            self.matter_PK, z, ks_sample, weyl_scaled=False, typ="matter"
+        )
         return P_m
 
     def _get_Egamma_Elambda(self, Cls, windows, matter_ps):
@@ -160,13 +207,15 @@ class Template:
         dChi = Chis[1] - Chis[0]
         I_map_tot = None
         t0 = datetime.datetime.now()
-        print(f"[00:00] {0}%", end='')
+        print(f"[00:00] {0}%", end="")
         for Chi_i, Chi in enumerate(Chis):
             Cls = dict.fromkeys(self.lss_fields)
             windows = dict.fromkeys(self.lss_fields)
             matter_ps = self._get_matter_ps(Chi)
             for field in self.lss_fields:
-                Cls[field], windows[field] = self._get_Cl_and_window(Chi, field, gal_distro=gal_distro)
+                Cls[field], windows[field] = self._get_Cl_and_window(
+                    Chi, field, gal_distro=gal_distro
+                )
 
             E_gamma, E_lambda = self._get_Egamma_Elambda(Cls, windows, matter_ps)
             B_gamma = np.zeros(np.shape(E_gamma))
@@ -177,11 +226,14 @@ class Template:
 
             window_k = self._get_window_k(Chi)
             if I_map_tot is None:
-                I_map_tot = I_map / (Chi ** 2) * window_k
+                I_map_tot = I_map / (Chi**2) * window_k
             else:
-                I_map_tot += I_map / (Chi ** 2) * window_k
-            print('\r', end='')
-            print(f"[{str(datetime.datetime.now() - t0)[:-7]}] {int((Chi_i+1)/Nchi * 100)}%", end='')
+                I_map_tot += I_map / (Chi**2) * window_k
+            print("\r", end="")
+            print(
+                f"[{str(datetime.datetime.now() - t0)[:-7]}] {int((Chi_i + 1) / Nchi * 100)}%",
+                end="",
+            )
         print("")
         I_alm = self.sht.map2alm(I_map_tot)
         return self.sht.almxfl(I_alm, 1 / self.F_L) * dChi
@@ -193,20 +245,22 @@ class Template:
             include_rd = False
         elif typ == "rd":
             include_ll = False
-        ells = np.arange(self.Lmax_map+1)
-        ells_inv = np.zeros(self.Lmax_map+1)
-        ells_inv[1:] = 1/ells[1:]
+        ells = np.arange(self.Lmax_map + 1)
+        ells_inv = np.zeros(self.Lmax_map + 1)
+        ells_inv[1:] = 1 / ells[1:]
         Chis = np.linspace(0, self._cosmo.get_chi_star(), Nchi + 1)[1:]
         dChi = Chis[1] - Chis[0]
         I_map_tot = None
         t0 = datetime.datetime.now()
-        print(f"[00:00] {0}%", end='')
+        print(f"[00:00] {0}%", end="")
         for Chi_i, Chi in enumerate(Chis):
             Cls = dict.fromkeys(self.lss_fields)
             windows = dict.fromkeys(self.lss_fields)
             matter_ps = self._get_matter_ps(Chi)
             for field in self.lss_fields:
-                Cls[field], windows[field] = self._get_Cl_and_window(Chi, field, gal_distro=gal_distro)
+                Cls[field], windows[field] = self._get_Cl_and_window(
+                    Chi, field, gal_distro=gal_distro
+                )
 
             E_gamma, E_lambda = self._get_Egamma_Elambda(Cls, windows, matter_ps)
             B_gamma = np.zeros(np.shape(E_gamma))
@@ -214,25 +268,36 @@ class Template:
             I_map = np.zeros(self.sht.nside2npix())
             if include_ll:
                 spin = 2
-                Q_gamma, U_gamma = self.sht.alm2map_spin(np.array([E_gamma, B_gamma]), spin)
-                Q_lambda, U_lambda = self.sht.alm2map_spin(np.array([E_lambda, B_lambda]), spin)
+                Q_gamma, U_gamma = self.sht.alm2map_spin(
+                    np.array([E_gamma, B_gamma]), spin
+                )
+                Q_lambda, U_lambda = self.sht.alm2map_spin(
+                    np.array([E_lambda, B_lambda]), spin
+                )
                 I_map += (Q_gamma * Q_lambda) + (U_lambda * U_gamma)
                 I_map += self.sht.alm2map(E_gamma) * self.sht.alm2map(E_lambda)
             if include_rd:
                 spin = 1
-                E_gamma  = self.sht.almxfl(E_gamma, ells+1)
-                E_lambda  = self.sht.almxfl(E_lambda, ells_inv)
-                Q_gamma, U_gamma = self.sht.alm2map_spin(np.array([E_gamma, B_gamma]), spin)
-                Q_lambda, U_lambda = self.sht.alm2map_spin(np.array([E_lambda, B_lambda]), spin)
+                E_gamma = self.sht.almxfl(E_gamma, ells + 1)
+                E_lambda = self.sht.almxfl(E_lambda, ells_inv)
+                Q_gamma, U_gamma = self.sht.alm2map_spin(
+                    np.array([E_gamma, B_gamma]), spin
+                )
+                Q_lambda, U_lambda = self.sht.alm2map_spin(
+                    np.array([E_lambda, B_lambda]), spin
+                )
                 I_map += 2 * ((Q_gamma * Q_lambda) + (U_lambda * U_gamma))
 
             window_k = self._get_window_k(Chi)
             if I_map_tot is None:
-                I_map_tot = I_map / (Chi ** 2) * window_k
+                I_map_tot = I_map / (Chi**2) * window_k
             else:
-                I_map_tot += I_map / (Chi ** 2) * window_k
-            print('\r', end='')
-            print(f"[{str(datetime.datetime.now() - t0)[:-7]}] {int((Chi_i+1)/Nchi * 100)}%", end='')
+                I_map_tot += I_map / (Chi**2) * window_k
+            print("\r", end="")
+            print(
+                f"[{str(datetime.datetime.now() - t0)[:-7]}] {int((Chi_i + 1) / Nchi * 100)}%",
+                end="",
+            )
         print("")
         I_alm = self.sht.map2alm(I_map_tot)
         return self.sht.almxfl(I_alm, 1 / self.F_L) * dChi

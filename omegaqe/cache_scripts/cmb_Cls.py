@@ -6,12 +6,14 @@ from omegaqe.qe import QE
 
 cache_dir = omegaqe.CACHE_DIR
 
+
 def save(C, exp, Lmax):
     sep = tools.getFileSep()
     folder = cache_dir + sep + "_Cls" + sep + exp
     filename = f"Cls_cmb_{Lmax}.npy"
     print(f"Saving {filename} in {folder}")
     tools.save_array(folder, filename, C)
+
 
 def main(exp):
     qe = QE(exp=exp)
@@ -28,9 +30,6 @@ def main(exp):
         N = qe.cmb[field].N_spline(Ls)
         C[iii, 2, :] = N
     save(C, exp, Lmax)
-
-
-
 
 
 if __name__ == "__main__":

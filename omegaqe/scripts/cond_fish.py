@@ -7,6 +7,7 @@ from omegaqe.tools import parse_boolean, mpi, none_or_str, getFileSep
 import os
 import sys
 
+
 def _main(exp, typs, params, dir, _id):
     # get basic information about the MPI communicator
     world_comm = MPI.COMM_WORLD
@@ -18,9 +19,7 @@ def _main(exp, typs, params, dir, _id):
     start_time_tot = MPI.Wtime()
 
     mpi.output("-------------------------------------", my_rank, _id)
-    mpi.output(
-        f"exp: {exp} ",
-        my_rank, _id)
+    mpi.output(f"exp: {exp} ", my_rank, _id)
     mpi.output("Setting up parallisation of workload.", my_rank, _id)
 
     N_params = np.size(params)
@@ -30,16 +29,29 @@ def _main(exp, typs, params, dir, _id):
     mpi.output("Initialisation finished.", my_rank, _id)
 
     cosmo = Cosmology(paramfile="Planck")
-    fish = Fisher(exp=exp, qe="TEB", gmv=True, ps="gradient", L_cuts=(30,3000,30,5000), iter=False, iter_ext=False, data_dir=f"{omegaqe.dir_path}/data_planck/", cosmology=cosmo)
-
+    fish = Fisher(
+        exp=exp,
+        qe="TEB",
+        gmv=True,
+        ps="gradient",
+        L_cuts=(30, 3000, 30, 5000),
+        iter=False,
+        iter_ext=False,
+        data_dir=f"{omegaqe.dir_path}/data_planck/",
+        cosmology=cosmo,
+    )
 
     start_time = MPI.Wtime()
-    F_bi = np.empty(my_end-my_start)
+    F_bi = np.empty(my_end - my_start)
     F_kk = np.empty(my_end - my_start)
     F_cmb = np.empty(my_end - my_start)
     for _i, idx in enumerate(np.arange(my_start, my_end)):
-        F_bi[_i] = fish.get_optimal_bispectrum_Fisher(typs, Lmax=3000, f_sky=0.4, param=params[idx], dx=None)
-        F_kk[_i] = fish.get_kappa_ps_Fisher(Lmax=3000, f_sky=0.4, param=params[idx], dx=None)
+        F_bi[_i] = fish.get_optimal_bispectrum_Fisher(
+            typs, Lmax=3000, f_sky=0.4, param=params[idx], dx=None
+        )
+        F_kk[_i] = fish.get_kappa_ps_Fisher(
+            Lmax=3000, f_sky=0.4, param=params[idx], dx=None
+        )
         F_cmb[_i] = fish.get_cmb_Fisher(Lmax=3000, f_sky=0.4, param=params[idx], dx=None)
 
     end_time = MPI.Wtime()
@@ -52,22 +64,22 @@ def _main(exp, typs, params, dir, _id):
         F_arr_bi = np.ones(N_params)
         F_arr_kk = np.ones(N_params)
         F_arr_cmb = np.ones(N_params)
-        F_arr_bi[my_start: my_end] = F_bi
-        F_arr_kk[my_start: my_end] = F_kk
-        F_arr_cmb[my_start: my_end] = F_cmb
+        F_arr_bi[my_start:my_end] = F_bi
+        F_arr_kk[my_start:my_end] = F_kk
+        F_arr_cmb[my_start:my_end] = F_cmb
         for rank in range(1, world_size):
             start, end = mpi.get_start_end(rank, workloads)
             F_bi = np.empty(end - start)
             world_comm.Recv([F_bi, MPI.DOUBLE], source=rank, tag=77)
-            F_arr_bi[start: end] = F_bi
+            F_arr_bi[start:end] = F_bi
 
             F_kk = np.empty(end - start)
             world_comm.Recv([F_kk, MPI.DOUBLE], source=rank, tag=77)
-            F_arr_kk[start: end] = F_kk
+            F_arr_kk[start:end] = F_kk
 
             F_cmb = np.empty(end - start)
             world_comm.Recv([F_cmb, MPI.DOUBLE], source=rank, tag=77)
-            F_arr_cmb[start: end] = F_cmb
+            F_arr_cmb[start:end] = F_cmb
         param_str = ""
         dir += f"{exp}/{typs}/{param_str}"
         if not os.path.isdir(dir):
@@ -84,14 +96,13 @@ def _main(exp, typs, params, dir, _id):
         world_comm.Send([F_cmb, MPI.DOUBLE], dest=0, tag=77)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = sys.argv[1:]
     if len(args) != 5:
-        raise ValueError(
-            "Must supply arguments: exp typs, params, dir id")
+        raise ValueError("Must supply arguments: exp typs, params, dir id")
     exp = str(args[0])
     typs = str(args[1])
-    params = np.array(args[2].split(','))
+    params = np.array(args[2].split(","))
     dir = args[3]
     _id = args[4]
     _main(exp, typs, params, dir, _id)

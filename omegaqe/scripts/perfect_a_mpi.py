@@ -43,15 +43,21 @@ def _main(exp, Nbins, Nell, dL2, Ntheta, out_dir, _id):
             pass
 
     _output("-------------------------------------", my_rank, _id)
-    _output(f"exp: {exp}, Nbins: {Nbins}, Nell: {Nell}, dL2: {dL2}, Ntheta: {Ntheta}", my_rank, _id)
+    _output(
+        f"exp: {exp}, Nbins: {Nbins}, Nell: {Nell}, dL2: {dL2}, Ntheta: {Ntheta}",
+        my_rank,
+        _id,
+    )
 
     _output("Initialising Fisher object...", my_rank, _id)
     fish = Fisher(exp=exp)
-    Ls_samp = fish.covariance.get_log_sample_Ls(Lmin=30, Lmax=4000, Nells=Nell, dL_small=1)
+    Ls_samp = fish.covariance.get_log_sample_Ls(
+        Lmin=30, Lmax=4000, Nells=Nell, dL_small=1
+    )
 
     _output("Setting up parallelisation of workload...", my_rank, _id)
 
-    N_steps = int((Nbins+1) * Nbins/2)
+    N_steps = int((Nbins + 1) * Nbins / 2)
     workloads = _get_workloads(N_steps, world_size)
     my_start, my_end = _get_start_end(my_rank, workloads)
 
@@ -61,7 +67,6 @@ def _main(exp, Nbins, Nell, dL2, Ntheta, out_dir, _id):
         for jjj in range(iii, Nbins):
             indices[idx] = (iii, jjj)
             idx += 1
-
 
     _output("Getting bins...", my_rank, _id)
     cosmo = fish.covariance.power.cosmo
@@ -82,8 +87,20 @@ def _main(exp, Nbins, Nell, dL2, Ntheta, out_dir, _id):
     for iii, jjj in my_indices:
         index_a1, index_a2 = iii * 2, iii * 2 + 1
         index_b1, index_b2 = jjj * 2, jjj * 2 + 1
-        gal_bins_tmp = (gal_bins[index_a1], gal_bins[index_a2], gal_bins[index_b1], gal_bins[index_b2])
-        F_tot += fish.get_bispectrum_Fisher("abw", Ls=Ls_samp, Ntheta=Ntheta, f_sky=0.4, gal_bins=gal_bins_tmp, gal_distro="perfect")
+        gal_bins_tmp = (
+            gal_bins[index_a1],
+            gal_bins[index_a2],
+            gal_bins[index_b1],
+            gal_bins[index_b2],
+        )
+        F_tot += fish.get_bispectrum_Fisher(
+            "abw",
+            Ls=Ls_samp,
+            Ntheta=Ntheta,
+            f_sky=0.4,
+            gal_bins=gal_bins_tmp,
+            gal_distro="perfect",
+        )
         _output(f"Finished {count}/{np.size(my_indices)}", my_rank, _id)
         count += 1
     end_time = MPI.Wtime()
@@ -103,7 +120,7 @@ def _main(exp, Nbins, Nell, dL2, Ntheta, out_dir, _id):
         if not os.path.isdir(out_dir):
             os.makedirs(out_dir)
         _output(f"Result: {np.sqrt(np.sum(results_arr))}", my_rank, _id)
-        np.savetxt(out_dir+"/F.out", np.array([np.sqrt(np.sum(results_arr))]))
+        np.savetxt(out_dir + "/F.out", np.array([np.sqrt(np.sum(results_arr))]))
         end_time_tot = MPI.Wtime()
         print("Total time: " + str(end_time_tot - start_time_tot))
         _output("Total time: " + str(end_time_tot - start_time_tot), my_rank, _id)
@@ -111,7 +128,7 @@ def _main(exp, Nbins, Nell, dL2, Ntheta, out_dir, _id):
         world_comm.Send([np.array([F_tot]), MPI.DOUBLE], dest=0, tag=77)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = sys.argv[1:]
     if len(args) != 7:
         raise ValueError("Arguments should be exp Nbins Nell dL2 Ntheta out_dir _id")

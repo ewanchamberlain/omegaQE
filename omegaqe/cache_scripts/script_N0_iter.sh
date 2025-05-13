@@ -6,4 +6,3 @@ echo "$exp"
 python N0_iter.py "$exp" EB True 15 30 3000 30 5000 False
 python N0_iter.py "$exp" EB True 15 30 3000 30 5000 True
 done
-

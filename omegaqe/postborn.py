@@ -12,17 +12,42 @@ def _get_modecoupling(M_path, M_ellmax, M_Nell, cmb, zmin, zmax, Lmax, powerspec
     if zmin == 0 and zmax is None:
         sep = getFileSep()
         mode_typ = "ww" if cmb else "rr"
-        ells_sample = np.load(M_path + sep + mode_typ + sep + f"{M_ellmax}_{M_Nell}" + sep + "ells.npy")
-        M = np.load(M_path + sep + mode_typ + sep + f"{M_ellmax}_{M_Nell}" + sep + "M.npy")
+        ells_sample = np.load(
+            M_path + sep + mode_typ + sep + f"{M_ellmax}_{M_Nell}" + sep + "ells.npy"
+        )
+        M = np.load(
+            M_path + sep + mode_typ + sep + f"{M_ellmax}_{M_Nell}" + sep + "M.npy"
+        )
         return mode.spline(ells_sample, M)
     print("Generating new M_ww... ")
     mode_typ = "kk" if cmb else "ss"
-    return mode.spline(ells_sample=mode.generate_sample_ells(M_ellmax, M_Nell), typ=mode_typ, star=False, zmin=zmin, zmax=zmax)
+    return mode.spline(
+        ells_sample=mode.generate_sample_ells(M_ellmax, M_Nell),
+        typ=mode_typ,
+        star=False,
+        zmin=zmin,
+        zmax=zmax,
+    )
 
-def _get_postborn_ps(typ, Ls, M_path, Nell_prim, Ntheta, M_ellmax, M_Nell, cmb, zmin=0, zmax=None, powerspectra=None):
+
+def _get_postborn_ps(
+    typ,
+    Ls,
+    M_path,
+    Nell_prim,
+    Ntheta,
+    M_ellmax,
+    M_Nell,
+    cmb,
+    zmin=0,
+    zmax=None,
+    powerspectra=None,
+):
     Lmin = np.min(Ls)
-    Lmax = 2*np.max(Ls)
-    M_spline = _get_modecoupling(M_path, M_ellmax, M_Nell, cmb, zmin, zmax, Lmax, powerspectra)
+    Lmax = 2 * np.max(Ls)
+    M_spline = _get_modecoupling(
+        M_path, M_ellmax, M_Nell, cmb, zmin, zmax, Lmax, powerspectra
+    )
     dTheta = np.pi / Ntheta
     thetas = np.linspace(dTheta, np.pi, Ntheta, dtype=float)
     Lprims = np.geomspace(Lmin, Lmax, Nell_prim)
@@ -40,33 +65,167 @@ def _get_postborn_ps(typ, Ls, M_path, Nell_prim, Ntheta, M_ellmax, M_Nell, cmb, 
             w = np.ones(np.shape(Lprimprims))
             w[Lprimprims < Lmin] = 0
             w[Lprimprims > Lmax] = 0
-            I_tmp[jjj] = np.sum(_get_integrand(typ, w, L_vec, Lprim_vec, Lprimprim_vec, thetas, dTheta, M_spline))
+            I_tmp[jjj] = np.sum(
+                _get_integrand(
+                    typ, w, L_vec, Lprim_vec, Lprimprim_vec, thetas, dTheta, M_spline
+                )
+            )
         I[iii] = InterpolatedUnivariateSpline(Lprims, I_tmp).integral(Lmin, Lmax)
     return 4 * I / ((2 * np.pi) ** 2)
+
 
 def _get_integrand(typ, w, L_vec, Lprim_vec, Lprimprim_vec, thetas, dTheta, M_spline):
     L = L_vec.rho
     Lprim = Lprim_vec.rho
     Lprimprims = Lprimprim_vec.rho
     if typ == "omega":
-        return 2 * w * Lprim * dTheta * (L * Lprim * np.sin(thetas)) ** 2 * (Lprim * Lprimprims * np.cos(Lprimprim_vec.deltaphi(Lprim_vec))) ** 2 / ((Lprim) ** 4 * (Lprimprims) ** 4) * M_spline.ev(Lprim, Lprimprims)
+        return (
+            2
+            * w
+            * Lprim
+            * dTheta
+            * (L * Lprim * np.sin(thetas)) ** 2
+            * (Lprim * Lprimprims * np.cos(Lprimprim_vec.deltaphi(Lprim_vec))) ** 2
+            / ((Lprim) ** 4 * (Lprimprims) ** 4)
+            * M_spline.ev(Lprim, Lprimprims)
+        )
     if typ == "pb22_kappa":
-        return 2 * w * Lprim * dTheta * (L_vec * Lprimprims * np.cos(Lprimprim_vec.deltaphi(L_vec))) ** 2 * (Lprim * Lprimprims * np.cos(Lprimprim_vec.deltaphi(Lprim_vec))) ** 2 / ((Lprim) ** 4 * (Lprimprims) ** 4) * M_spline.ev(Lprimprims, Lprim)
+        return (
+            2
+            * w
+            * Lprim
+            * dTheta
+            * (L_vec * Lprimprims * np.cos(Lprimprim_vec.deltaphi(L_vec))) ** 2
+            * (Lprim * Lprimprims * np.cos(Lprimprim_vec.deltaphi(Lprim_vec))) ** 2
+            / ((Lprim) ** 4 * (Lprimprims) ** 4)
+            * M_spline.ev(Lprimprims, Lprim)
+        )
     if typ == "pb13_kappa":
-        return -2 * Lprim * dTheta * (L * Lprim * np.cos(thetas)) ** 2 / ((Lprim) ** 4) * M_spline.ev(L, Lprim)
+        return (
+            -2
+            * Lprim
+            * dTheta
+            * (L * Lprim * np.cos(thetas)) ** 2
+            / ((Lprim) ** 4)
+            * M_spline.ev(L, Lprim)
+        )
     if typ == "pb_kappa":
-        return (2 * w * Lprim * dTheta * (L_vec * Lprimprims * np.cos(Lprimprim_vec.deltaphi(L_vec))) ** 2 * (Lprim * Lprimprims * np.cos(Lprimprim_vec.deltaphi(Lprim_vec))) ** 2 / ((Lprim) ** 4 * (Lprimprims) ** 4) * M_spline.ev(Lprimprims, Lprim)) - (2 * Lprim * dTheta * (L * Lprim * np.cos(thetas)) ** 2 / ((Lprim) ** 4) * M_spline.ev(L, Lprim))
+        return (
+            2
+            * w
+            * Lprim
+            * dTheta
+            * (L_vec * Lprimprims * np.cos(Lprimprim_vec.deltaphi(L_vec))) ** 2
+            * (Lprim * Lprimprims * np.cos(Lprimprim_vec.deltaphi(Lprim_vec))) ** 2
+            / ((Lprim) ** 4 * (Lprimprims) ** 4)
+            * M_spline.ev(Lprimprims, Lprim)
+        ) - (
+            2
+            * Lprim
+            * dTheta
+            * (L * Lprim * np.cos(thetas)) ** 2
+            / ((Lprim) ** 4)
+            * M_spline.ev(L, Lprim)
+        )
     raise ValueError(f"Type: {typ} not recognised")
 
-def omega_ps(ells, M_path=f"{omegaqe.CACHE_DIR}/_M", Nell_prim=1000, Ntheta=500, cmb=True, zmin=0, zmax=None, powerspectra=None):
-    return _get_postborn_ps("omega", ells, M_path, Nell_prim, Ntheta, 10000, 200, cmb, zmin, zmax, powerspectra)
 
-def pb22_kappa_ps(ells, M_path=f"{omegaqe.CACHE_DIR}/_M", Nell_prim=1000, Ntheta=500, cmb=True, zmin=0, zmax=None, powerspectra=None):
-    return _get_postborn_ps("pb22_kappa", ells, M_path, Nell_prim, Ntheta, 10000, 200, cmb, zmin, zmax, powerspectra)
+def omega_ps(
+    ells,
+    M_path=f"{omegaqe.CACHE_DIR}/_M",
+    Nell_prim=1000,
+    Ntheta=500,
+    cmb=True,
+    zmin=0,
+    zmax=None,
+    powerspectra=None,
+):
+    return _get_postborn_ps(
+        "omega",
+        ells,
+        M_path,
+        Nell_prim,
+        Ntheta,
+        10000,
+        200,
+        cmb,
+        zmin,
+        zmax,
+        powerspectra,
+    )
 
-def pb13_kappa_ps(ells, M_path=f"{omegaqe.CACHE_DIR}/_M", Nell_prim=1000, Ntheta=500, cmb=True, zmin=0, zmax=None, powerspectra=None):
+
+def pb22_kappa_ps(
+    ells,
+    M_path=f"{omegaqe.CACHE_DIR}/_M",
+    Nell_prim=1000,
+    Ntheta=500,
+    cmb=True,
+    zmin=0,
+    zmax=None,
+    powerspectra=None,
+):
+    return _get_postborn_ps(
+        "pb22_kappa",
+        ells,
+        M_path,
+        Nell_prim,
+        Ntheta,
+        10000,
+        200,
+        cmb,
+        zmin,
+        zmax,
+        powerspectra,
+    )
+
+
+def pb13_kappa_ps(
+    ells,
+    M_path=f"{omegaqe.CACHE_DIR}/_M",
+    Nell_prim=1000,
+    Ntheta=500,
+    cmb=True,
+    zmin=0,
+    zmax=None,
+    powerspectra=None,
+):
     # NOTE: postborn paper has this term wrong, Krausse paper is correct
-    return _get_postborn_ps("pb13_kappa", ells, M_path, Nell_prim, Ntheta, 10000, 200, cmb, zmin, zmax, powerspectra)
+    return _get_postborn_ps(
+        "pb13_kappa",
+        ells,
+        M_path,
+        Nell_prim,
+        Ntheta,
+        10000,
+        200,
+        cmb,
+        zmin,
+        zmax,
+        powerspectra,
+    )
 
-def postborn_kappa_ps(ells, M_path=f"{omegaqe.CACHE_DIR}/_M", Nell_prim=1000, Ntheta=500, cmb=True, zmin=0, zmax=None, powerspectra=None):
-    return _get_postborn_ps("pb_kappa", ells, M_path, Nell_prim, Ntheta, 10000, 200, cmb, zmin, zmax, powerspectra)
+
+def postborn_kappa_ps(
+    ells,
+    M_path=f"{omegaqe.CACHE_DIR}/_M",
+    Nell_prim=1000,
+    Ntheta=500,
+    cmb=True,
+    zmin=0,
+    zmax=None,
+    powerspectra=None,
+):
+    return _get_postborn_ps(
+        "pb_kappa",
+        ells,
+        M_path,
+        Nell_prim,
+        Ntheta,
+        10000,
+        200,
+        cmb,
+        zmin,
+        zmax,
+        powerspectra,
+    )

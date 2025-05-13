@@ -16,7 +16,24 @@ def _get_lss_cls_dict(cls_path):
     }
     return cls_dict
 
-def _main(bias_typ, exp, N_Ls, N_L1, N_L3, Ntheta12, Ntheta13, noise, lss_cls_path, dir, bi_typ, gmv, fields, u_typ, _id):
+
+def _main(
+    bias_typ,
+    exp,
+    N_Ls,
+    N_L1,
+    N_L3,
+    Ntheta12,
+    Ntheta13,
+    noise,
+    lss_cls_path,
+    dir,
+    bi_typ,
+    gmv,
+    fields,
+    u_typ,
+    _id,
+):
     # get basic information about the MPI communicator
     world_comm = MPI.COMM_WORLD
     world_size = world_comm.Get_size()
@@ -25,7 +42,11 @@ def _main(bias_typ, exp, N_Ls, N_L1, N_L3, Ntheta12, Ntheta13, noise, lss_cls_pa
     start_time_tot = MPI.Wtime()
 
     mpi.output("-------------------------------------", my_rank, _id)
-    mpi.output(f"bias_typ: {bias_typ}, exp: {exp}, N_Ls: {N_Ls}, N_L1: {N_L1}, N_L3: {N_L3}, Ntheta12: {Ntheta12}, Ntheta13: {Ntheta13}, noise: {noise}, lss_cls_path: {lss_cls_path}, bi_typ: {bi_typ}, gmv: {gmv}, fields: {fields},u_typ: {u_typ}", my_rank, _id)
+    mpi.output(
+        f"bias_typ: {bias_typ}, exp: {exp}, N_Ls: {N_Ls}, N_L1: {N_L1}, N_L3: {N_L3}, Ntheta12: {Ntheta12}, Ntheta13: {Ntheta13}, noise: {noise}, lss_cls_path: {lss_cls_path}, bi_typ: {bi_typ}, gmv: {gmv}, fields: {fields},u_typ: {u_typ}",
+        my_rank,
+        _id,
+    )
     mpi.output("Setting up parallisation of workload.", my_rank, _id)
 
     Ls = np.geomspace(30, 3000, N_Ls)
@@ -37,15 +58,14 @@ def _main(bias_typ, exp, N_Ls, N_L1, N_L3, Ntheta12, Ntheta13, noise, lss_cls_pa
 
     verbose = True if my_rank == 0 else False
 
-    
     lss_cls = None if lss_cls_path is None else _get_lss_cls_dict(lss_cls_path)
-    
+
     if "_iter" in fields:
         iter = True
         qe_fields = fields[:-5]
         mpi.output(f"Iter rec on fields {qe_fields}.", my_rank, _id)
     else:
-        iter=False
+        iter = False
         qe_fields = fields
         mpi.output(f"QE rec on fields {qe_fields}.", my_rank, _id)
 
@@ -53,7 +73,24 @@ def _main(bias_typ, exp, N_Ls, N_L1, N_L3, Ntheta12, Ntheta13, noise, lss_cls_pa
     # TODO: be careful of F_L directory location
     if u_typ is not None:
         u_typ = int(u_typ)
-    N = bias(bias_typ, Ls[my_start: my_end], bi_typ, exp=exp, qe_fields=qe_fields, gmv=gmv, N_L1=N_L1, N_L3=N_L3, Ntheta12=Ntheta12, Ntheta13=Ntheta13, F_L_path=f"{omegaqe.CACHE_DIR}/_F_L", verbose=verbose, noise=noise, lss_cls=lss_cls, iter=iter, magbias_typ=u_typ)
+    N = bias(
+        bias_typ,
+        Ls[my_start:my_end],
+        bi_typ,
+        exp=exp,
+        qe_fields=qe_fields,
+        gmv=gmv,
+        N_L1=N_L1,
+        N_L3=N_L3,
+        Ntheta12=Ntheta12,
+        Ntheta13=Ntheta13,
+        F_L_path=f"{omegaqe.CACHE_DIR}/_F_L",
+        verbose=verbose,
+        noise=noise,
+        lss_cls=lss_cls,
+        iter=iter,
+        magbias_typ=u_typ,
+    )
     end_time = MPI.Wtime()
 
     mpi.output("Bias calculation finished.", my_rank, _id)
@@ -62,20 +99,20 @@ def _main(bias_typ, exp, N_Ls, N_L1, N_L3, Ntheta12, Ntheta13, noise, lss_cls_pa
         print("Bias time: " + str(end_time - start_time))
         mpi.output("Bias time: " + str(end_time - start_time), my_rank, _id)
         N_arr = np.ones(N_Ls)
-        N_arr[my_start: my_end] = N
+        N_arr[my_start:my_end] = N
         for rank in range(1, world_size):
             start, end = mpi.get_start_end(rank, workloads)
             N = np.empty(end - start)
             world_comm.Recv([N, MPI.DOUBLE], source=rank, tag=77)
-            N_arr[start: end] = N
+            N_arr[start:end] = N
         gmv_str = "gmv" if gmv else "single"
         bias_typ += "_nN" if not noise else ""
         bias_typ += f"_u{u_typ}" if u_typ is not None else ""
         dir += f"{exp}/{fields}_{gmv_str}/{bi_typ}/{bias_typ}"
         if not os.path.isdir(dir):
             os.makedirs(dir)
-        np.save(dir+"/Ls", Ls)
-        np.save(dir+"/N", N_arr)
+        np.save(dir + "/Ls", Ls)
+        np.save(dir + "/N", N_arr)
         end_time_tot = MPI.Wtime()
         print("Total time: " + str(end_time_tot - start_time_tot))
         mpi.output("Total time: " + str(end_time_tot - start_time_tot), my_rank, _id)
@@ -83,10 +120,12 @@ def _main(bias_typ, exp, N_Ls, N_L1, N_L3, Ntheta12, Ntheta13, noise, lss_cls_pa
         world_comm.Send([N, MPI.DOUBLE], dest=0, tag=77)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = sys.argv[1:]
     if len(args) != 15:
-        raise ValueError("Must supply arguments: bias_typ exp bi_typ fields gmv Nell N_L1 N_L3 Ntheta12 Ntheta13 noise lss_cls_path u_typ dir id")
+        raise ValueError(
+            "Must supply arguments: bias_typ exp bi_typ fields gmv Nell N_L1 N_L3 Ntheta12 Ntheta13 noise lss_cls_path u_typ dir id"
+        )
     bias_typ = str(args[0])
     exp = str(args[1])
     bi_typ = str(args[2])
@@ -102,4 +141,20 @@ if __name__ == '__main__':
     u_typ = none_or_str(args[12])
     dir = args[13]
     _id = args[14]
-    _main(bias_typ, exp, N_Ls, N_L1, N_L3, Ntheta12, Ntheta13, noise, lss_cls_path, dir, bi_typ, gmv, fields, u_typ, _id)
+    _main(
+        bias_typ,
+        exp,
+        N_Ls,
+        N_L1,
+        N_L3,
+        Ntheta12,
+        Ntheta13,
+        noise,
+        lss_cls_path,
+        dir,
+        bi_typ,
+        gmv,
+        fields,
+        u_typ,
+        _id,
+    )

@@ -24,9 +24,13 @@ def _save_norms(norm_k, norm_w, exp, qe_typ, offset, nbins_k, nbins_w, noise, gm
 
 
 def main(exp, nsims, qe_typ, offset, nbins_k, nbins_w, noise, gmv, nthreads, _id):
-    dm.sht.nthreads=nthreads
+    dm.sht.nthreads = nthreads
     mpi.output("-------------------------------------", 0, _id)
-    mpi.output(f"exp: {exp}, nsims: {nsims}, qe_typ: {qe_typ}, noise: {noise}, gmv: {gmv}, nthreads: {nthreads}", 0, _id)
+    mpi.output(
+        f"exp: {exp}, nsims: {nsims}, qe_typ: {qe_typ}, noise: {noise}, gmv: {gmv}, nthreads: {nthreads}",
+        0,
+        _id,
+    )
     deflect_typ = "diff2_diff2"
     name_ext = "diff2"
     rec_ext = "" if noise else "nN"
@@ -34,34 +38,47 @@ def main(exp, nsims, qe_typ, offset, nbins_k, nbins_w, noise, gmv, nthreads, _id
         rec_ext += "_gmv"
     kappa_true = dm.sht.read_map(f"{dm.sims_dir}/kappa_{name_ext}.fits")
     omega_true = dm.sht.read_map(f"{dm.sims_dir}/omega_{name_ext}.fits")
-    kappa_map = dm.sht.read_map(f"{dm.sims_dir}/{deflect_typ}/{exp}/kappa/{qe_typ}_iter_{0}_{rec_ext}.fits")
-    omega_map = dm.sht.read_map(f"{dm.sims_dir}/{deflect_typ}/{exp}/omega/{qe_typ}_iter_{0}_{rec_ext}.fits")
+    kappa_map = dm.sht.read_map(
+        f"{dm.sims_dir}/{deflect_typ}/{exp}/kappa/{qe_typ}_iter_{0}_{rec_ext}.fits"
+    )
+    omega_map = dm.sht.read_map(
+        f"{dm.sims_dir}/{deflect_typ}/{exp}/omega/{qe_typ}_iter_{0}_{rec_ext}.fits"
+    )
     cl_k_cross = dm.sht.map2cl(kappa_true, kappa_map)
     cl_w_cross = dm.sht.map2cl(omega_true, omega_map)
     for sim in np.arange(1, nsims):
-        kappa_map = dm.sht.read_map(f"{dm.sims_dir}/{deflect_typ}/{exp}/kappa/{qe_typ}_iter_{sim}_{rec_ext}.fits")
-        omega_map = dm.sht.read_map(f"{dm.sims_dir}/{deflect_typ}/{exp}/omega/{qe_typ}_iter_{sim}_{rec_ext}.fits")
+        kappa_map = dm.sht.read_map(
+            f"{dm.sims_dir}/{deflect_typ}/{exp}/kappa/{qe_typ}_iter_{sim}_{rec_ext}.fits"
+        )
+        omega_map = dm.sht.read_map(
+            f"{dm.sims_dir}/{deflect_typ}/{exp}/omega/{qe_typ}_iter_{sim}_{rec_ext}.fits"
+        )
         cl_k_cross += dm.sht.map2cl(kappa_true, kappa_map)
         cl_w_cross += dm.sht.map2cl(omega_true, omega_map)
-        
+
     cl_k_true = dm.sht.map2cl(kappa_true)
     cl_w_true = dm.sht.map2cl(omega_true)
-    norm_k = cl_k_cross/(nsims * cl_k_true)
-    norm_w = cl_w_cross/(nsims * cl_w_true)
+    norm_k = cl_k_cross / (nsims * cl_k_true)
+    norm_w = cl_w_cross / (nsims * cl_w_true)
     norm_k_smooth = np.ones(np.size(norm_k))
     norm_w_smooth = np.ones(np.size(norm_w))
-    norm_k_smooth[offset:] = dm.sht.smoothed_cl(norm_k[offset:], nbins=nbins_k, zerod=False)
-    norm_w_smooth[offset:] = dm.sht.smoothed_cl(norm_w[offset:], nbins=nbins_w, zerod=False)
-    _save_norms(norm_k_smooth, norm_w_smooth, exp, qe_typ, offset, nbins_k, nbins_w, noise, gmv)
+    norm_k_smooth[offset:] = dm.sht.smoothed_cl(
+        norm_k[offset:], nbins=nbins_k, zerod=False
+    )
+    norm_w_smooth[offset:] = dm.sht.smoothed_cl(
+        norm_w[offset:], nbins=nbins_w, zerod=False
+    )
+    _save_norms(
+        norm_k_smooth, norm_w_smooth, exp, qe_typ, offset, nbins_k, nbins_w, noise, gmv
+    )
 
-    
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = sys.argv[1:]
     if len(args) != 10:
         raise ValueError(
-            "Must supply arguments: exp nsims qe_typ offset nbins_k nbins_w noise gmv nthreads _id")
+            "Must supply arguments: exp nsims qe_typ offset nbins_k nbins_w noise gmv nthreads _id"
+        )
     exp = str(args[0])
     nsims = int(args[1])
     qe_typ = str(args[2])

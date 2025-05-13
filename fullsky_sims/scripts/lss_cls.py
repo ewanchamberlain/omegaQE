@@ -15,5 +15,5 @@ def main():
     np.save(f"{fields.nbody.cache_dir}/_lss_cls/cl_Ik.npy", Cl_kI)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

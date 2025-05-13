@@ -15,9 +15,15 @@ def setup_dirs(sims_dir, exp, deflect_typs):
                 os.makedirs(full_dir)
 
 
-def main(exp, qe_typ, start, end, deflect_typ, iter, noise, gmv, bh, nbody, nthreads, _id):
+def main(
+    exp, qe_typ, start, end, deflect_typ, iter, noise, gmv, bh, nbody, nthreads, _id
+):
     mpi.output("-------------------------------------", 0, _id)
-    mpi.output(f"exp: {exp}, qe_typ: {qe_typ}, start: {start}, end: {end}, deflect_typ: {deflect_typ}, iter: {iter}, noise: {noise}, gmv:{gmv}, bh:{bh},nbody: {nbody}, nthreads: {nthreads}", 0, _id)
+    mpi.output(
+        f"exp: {exp}, qe_typ: {qe_typ}, start: {start}, end: {end}, deflect_typ: {deflect_typ}, iter: {iter}, noise: {noise}, gmv:{gmv}, bh:{bh},nbody: {nbody}, nthreads: {nthreads}",
+        0,
+        _id,
+    )
 
     fields = Fields(exp, nbody, use_lss_cache=True, use_cmb_cache=True, nthreads=nthreads)
     deflect_typs = ["pbdem_dem", "pbdem_zero"] if deflect_typ is None else [deflect_typ]
@@ -34,18 +40,25 @@ def main(exp, qe_typ, start, end, deflect_typ, iter, noise, gmv, bh, nbody, nthr
         for deflect_typ in deflect_typs:
             fields.setup_rec(sim, deflect_typ, iter=iter, noise=noise, gmv=gmv, bh=bh)
             kappa_rec = fields.get_kappa_rec(qe_typ, fft=False, iter=iter)
-            fields.nbody.sht.write_map(f"{sims_dir}/{deflect_typ}/{exp}/kappa/{qe_typ_str}_{sim}_{ext}.fits", kappa_rec)
+            fields.nbody.sht.write_map(
+                f"{sims_dir}/{deflect_typ}/{exp}/kappa/{qe_typ_str}_{sim}_{ext}.fits",
+                kappa_rec,
+            )
             mpi.output(f"   {deflect_typ} kappa done.", 0, _id)
             omega_rec = fields.get_omega_rec(qe_typ, fft=False, iter=iter)
-            fields.nbody.sht.write_map(f"{sims_dir}/{deflect_typ}/{exp}/omega/{qe_typ_str}_{sim}_{ext}.fits", omega_rec)
+            fields.nbody.sht.write_map(
+                f"{sims_dir}/{deflect_typ}/{exp}/omega/{qe_typ_str}_{sim}_{ext}.fits",
+                omega_rec,
+            )
             mpi.output(f"   {deflect_typ} omega done.", 0, _id)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = sys.argv[1:]
     if len(args) != 12:
         raise ValueError(
-            "Must supply arguments: exp qe_typ start end deflect_typ iter noise gmv bh nbody nthreads _id")
+            "Must supply arguments: exp qe_typ start end deflect_typ iter noise gmv bh nbody nthreads _id"
+        )
     exp = str(args[0])
     qe_typ = str(args[1])
     start = int(args[2])
@@ -56,6 +69,6 @@ if __name__ == '__main__':
     gmv = parse_boolean(args[7])
     bh = none_or_str(args[8])
     nbody = str(args[9])
-    nthreads  = int(args[10])
+    nthreads = int(args[10])
     _id = str(args[11])
     main(exp, qe_typ, start, end, deflect_typ, iter, noise, gmv, bh, nbody, nthreads, _id)

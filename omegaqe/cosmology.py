@@ -52,35 +52,59 @@ class Cosmology:
         mnu = 0.06
         sig8 = 0.8123981609602227
         b1 = 0.84
-        return {"thetastar": thetastar,
-                "H0": pars.H0,
-                "100thetastar": 100*thetastar,
-                "ombh2": pars.ombh2,
-                "omch2": pars.omch2,
-                "lnombh2": np.log(pars.ombh2),
-                "lnomch2": np.log(pars.omch2),
-                "omk": pars.omk,
-                "mnu": mnu,
-                "tau": pars.Reion.optical_depth,
-                "w": pars.DarkEnergy.w,
-                "wa": pars.DarkEnergy.wa,
-                "As": pars.InitPower.As,
-                "ns": pars.InitPower.ns,
-                "sig8": sig8,
-                "b1": b1,
-                }
+        return {
+            "thetastar": thetastar,
+            "H0": pars.H0,
+            "100thetastar": 100 * thetastar,
+            "ombh2": pars.ombh2,
+            "omch2": pars.omch2,
+            "lnombh2": np.log(pars.ombh2),
+            "lnomch2": np.log(pars.omch2),
+            "omk": pars.omk,
+            "mnu": mnu,
+            "tau": pars.Reion.optical_depth,
+            "w": pars.DarkEnergy.w,
+            "wa": pars.DarkEnergy.wa,
+            "As": pars.InitPower.As,
+            "ns": pars.InitPower.ns,
+            "sig8": sig8,
+            "b1": b1,
+        }
 
     def modify_params(self, pars, mod_dict, H0=False):
         if H0:
-            self._pars = camb.set_params(cp=pars, H0=mod_dict["H0"], ombh2=mod_dict["ombh2"], omch2=mod_dict["omch2"],
-                        omk=mod_dict["omk"], mnu=mod_dict["mnu"], tau=mod_dict["tau"], nnu=3.046,
-                        standard_neutrino_neff=3.046, w=mod_dict["w"], wa=mod_dict["wa"], As=mod_dict["As"],
-                        ns=mod_dict["ns"])
+            self._pars = camb.set_params(
+                cp=pars,
+                H0=mod_dict["H0"],
+                ombh2=mod_dict["ombh2"],
+                omch2=mod_dict["omch2"],
+                omk=mod_dict["omk"],
+                mnu=mod_dict["mnu"],
+                tau=mod_dict["tau"],
+                nnu=3.046,
+                standard_neutrino_neff=3.046,
+                w=mod_dict["w"],
+                wa=mod_dict["wa"],
+                As=mod_dict["As"],
+                ns=mod_dict["ns"],
+            )
         else:
-            self._pars = camb.set_params(cp=pars, thetastar=mod_dict["thetastar"], ombh2=mod_dict["ombh2"], omch2=mod_dict["omch2"],
-                        omk=mod_dict["omk"], mnu=mod_dict["mnu"], tau=mod_dict["tau"], nnu=3.046,
-                        standard_neutrino_neff=3.046, w=mod_dict["w"], wa=mod_dict["wa"], As=mod_dict["As"],
-                        ns=mod_dict["ns"], theta_H0_range=(1, 1000))
+            self._pars = camb.set_params(
+                cp=pars,
+                thetastar=mod_dict["thetastar"],
+                ombh2=mod_dict["ombh2"],
+                omch2=mod_dict["omch2"],
+                omk=mod_dict["omk"],
+                mnu=mod_dict["mnu"],
+                tau=mod_dict["tau"],
+                nnu=3.046,
+                standard_neutrino_neff=3.046,
+                w=mod_dict["w"],
+                wa=mod_dict["wa"],
+                As=mod_dict["As"],
+                ns=mod_dict["ns"],
+                theta_H0_range=(1, 1000),
+            )
         self.update_gal_bias(mod_dict["b1"])
         self._results = self.calc_results()
 
@@ -199,7 +223,7 @@ class Cosmology:
         poisson_fac = self.poisson_factor(zs)
         win = self.gal_lens_window(Chi1, Chi2, gal_distro, heaviside) * poisson_fac
         return win
-    
+
     def mu_window(self, Chi1, Chi2, gal_distro="LSST_gold", heaviside=True):
         """
         Reference 1411.0115
@@ -215,9 +239,9 @@ class Cosmology:
 
         """
         s = self.s_spline(self.Chi_to_z(Chi1))
-        fac = (5*s - 2)
+        fac = 5 * s - 2
         return fac * self.gal_lens_window(Chi1, Chi2, gal_distro, heaviside)
-    
+
     def mu_window_matter(self, Chi1, Chi2, gal_distro="LSST_gold", heaviside=True):
         """
         Reference 1411.0115
@@ -233,7 +257,7 @@ class Cosmology:
 
         """
         s = self.s_spline(self.Chi_to_z(Chi1))
-        fac = (5*s - 2)
+        fac = 5 * s - 2
         return fac * self.gal_lens_window_matter(Chi1, Chi2, gal_distro, heaviside)
 
     def rsd_window_constChi(self, Chi, ellmax, typ="LSST_gold", zmin=0, zmax=None):
@@ -251,25 +275,42 @@ class Cosmology:
 
         """
         ells = np.arange(9, ellmax + 1)
-        L0 = ((2 * ells ** 2) + (2 * ells) - 1) / ((2 * ells - 1) * (2 * ells + 3))
-        L_m1 = - ((ells * (ells - 1)) / ((2 * ells - 1) * np.sqrt((2 * ells - 3) * (2 * ells + 1))))
-        L_p1 = - (((ells + 1) * (ells + 2)) / ((2 * ells + 3) * np.sqrt((2 * ells + 1) * (2 * ells + 5))))
+        L0 = ((2 * ells**2) + (2 * ells) - 1) / ((2 * ells - 1) * (2 * ells + 3))
+        L_m1 = -(
+            (ells * (ells - 1))
+            / ((2 * ells - 1) * np.sqrt((2 * ells - 3) * (2 * ells + 1)))
+        )
+        L_p1 = -(
+            ((ells + 1) * (ells + 2))
+            / ((2 * ells + 3) * np.sqrt((2 * ells + 1) * (2 * ells + 5)))
+        )
         L_facs = np.array([L_m1, L0, L_p1])
         res = np.zeros(np.size(ells))
         for iii, L_fac in enumerate(L_facs):
             iii -= 1
             Chi_scaled = (2 * ells + 1 + 4 * iii) / (2 * ells + 1) * Chi
-            n = self.gal_window_Chi(Chi_scaled, typ=typ, zmin=zmin, zmax=zmax, bias_unity=True)
+            n = self.gal_window_Chi(
+                Chi_scaled, typ=typ, zmin=zmin, zmax=zmax, bias_unity=True
+            )
             z = self.Chi_to_z(Chi_scaled)
             f = self.get_f(z)
             res += L_fac * n * f
         return np.concatenate((np.zeros(9), res))
 
     def poisson_factor(self, z):
-        return (1 + z) * self.z_to_Chi(z) ** 2 * 3 / 2 * self._pars.omegam * self.get_hubble(0) ** 2
+        return (
+            (1 + z)
+            * self.z_to_Chi(z) ** 2
+            * 3
+            / 2
+            * self._pars.omegam
+            * self.get_hubble(0) ** 2
+        )
 
     def setup_dndz_splines(self, zs, dn_dzs, biases):
-        self.dn_dz_splines = np.empty(np.shape(dn_dzs)[0], dtype=InterpolatedUnivariateSpline)
+        self.dn_dz_splines = np.empty(
+            np.shape(dn_dzs)[0], dtype=InterpolatedUnivariateSpline
+        )
         self.gal_biases = np.empty(np.shape(dn_dzs)[0])
         dn_dz_tot = None
         for iii, dn_dz in enumerate(dn_dzs):
@@ -302,7 +343,9 @@ class Cosmology:
         return self.dn_dz_tot_spline(z)
 
     def _gal_z_CMB_distribution(self, z):
-        return self.cmb_lens_window(self.z_to_Chi(z), self.get_chi_star()) / self.get_hubble(z)
+        return self.cmb_lens_window(
+            self.z_to_Chi(z), self.get_chi_star()
+        ) / self.get_hubble(z)
 
     def _gal_z_flat_distribution(self, z):
         Chi_distro = np.ones(np.shape(z))
@@ -312,9 +355,18 @@ class Cosmology:
         return Chi_distro / self.get_hubble(z)
 
     def _check_z_distr_typ(self, typ):
-        typs = ["LSST_gold", "LSST_gold_bias_unity", "CMB", "flat", "flat_bias_unity", "perfect"]
+        typs = [
+            "LSST_gold",
+            "LSST_gold_bias_unity",
+            "CMB",
+            "flat",
+            "flat_bias_unity",
+            "perfect",
+        ]
         if typ not in typs:
-            raise ValueError(f"Redshift distribution type {typ} not from accepted types: {typs}")
+            raise ValueError(
+                f"Redshift distribution type {typ} not from accepted types: {typs}"
+            )
 
     def _get_z_distr_func(self, typ):
         # self._check_z_distr_typ(typ)
@@ -369,7 +421,7 @@ class Cosmology:
             bias[np.logical_and(z > 1.0, z < 1.2)] = self.gal_biases[4]
             return bias
         return 1 + (self.b1 * z)
-    
+
     def get_s_spline(self, typ=1):
         zs = np.linspace(0, 200, 10000)
         if typ == 1:
@@ -406,7 +458,9 @@ class Cosmology:
         window = (dn_dz * b) / norm
         return maths.rectangular_pulse_steps(z, zmin, zmax) * window
 
-    def gal_window_Chi(self, Chi, typ="LSST_gold", zmin=None, zmax=None, bias_unity=False):
+    def gal_window_Chi(
+        self, Chi, typ="LSST_gold", zmin=None, zmax=None, bias_unity=False
+    ):
         """
         1906.08760 eq 2.7
         Parameters
@@ -425,7 +479,9 @@ class Cosmology:
         window = window_z * self.get_hubble(z)
         return window
 
-    def _gal_window_z_no_norm(self, z, typ="LSST_gold", zmin=None, zmax=None, bias_unity=False):
+    def _gal_window_z_no_norm(
+        self, z, typ="LSST_gold", zmin=None, zmax=None, bias_unity=False
+    ):
         z_distr_func = self._get_z_distr_func(typ)
         dn_dz = z_distr_func(z)
         b = 1 if bias_unity else 1 + (self.b1 * z)
@@ -471,8 +527,8 @@ class Cosmology:
         k_B = physical_constants["Boltzmann constant"][0]
         exponent = np.asarray((h * nu) / (k_B * T), dtype=np.double)
         exponent[exponent > 700] = np.double(700)
-        small_nu = (np.exp(exponent) - 1) ** -1 * nu ** power
-        big_nu = (np.exp(exponent) - 1) ** -1 * nu_prim ** power * (nu / nu_prim) ** -alpha
+        small_nu = (np.exp(exponent) - 1) ** -1 * nu**power
+        big_nu = (np.exp(exponent) - 1) ** -1 * nu_prim**power * (nu / nu_prim) ** -alpha
         if np.shape(nu) != ():
             w1 = np.zeros(np.shape(nu))
             w2 = np.zeros(np.shape(nu))
@@ -487,7 +543,8 @@ class Cosmology:
         if self.cib_norms is None:
             self.cib_norms = np.load(Path(__file__).parent / "data/planck_cib/b_c.npy")
         if nu == 353e9:
-            if self.agora: return 6.48e-65 * 1e-6  # My fit of AGORA cib between ell of 110 and 2000
+            if self.agora:
+                return 6.48e-65 * 1e-6  # My fit of AGORA cib between ell of 110 and 2000
             return 5.28654e-65 * 1e-6  # From Toshiya, matching 1705.02332 and 2110.09730
             # return 7.75714689e-65* 1e-6
             # return self.cib_norms[0]
@@ -522,8 +579,12 @@ class Cosmology:
         H = self.get_hubble(z)
         z_c = 2
         sig_z = 2
-        window = (Chi ** 2) / (H * (1 + z) ** 2) * np.exp(-((z - z_c) ** 2) / (2 * sig_z ** 2)) * self._SED_func(
-            nu * (z + 1))
+        window = (
+            (Chi**2)
+            / (H * (1 + z) ** 2)
+            * np.exp(-((z - z_c) ** 2) / (2 * sig_z**2))
+            * self._SED_func(nu * (z + 1))
+        )
         return b_c * window
 
     def _cib_window_Chi_sSED(self, Chi, nu=353e9, b_c=None):
@@ -708,8 +769,17 @@ class Cosmology:
         if kmax is None:
             kmax = 100
         var1, var2 = self._get_ps_variables(typ)
-        PK = camb.get_matter_power_interpolator(self._pars, nonlinear=nonlinear, hubble_units=False, zmin=0, zmax=zmax, kmax=kmax,
-                                                k_hunit=False, var1=var1, var2=var2)
+        PK = camb.get_matter_power_interpolator(
+            self._pars,
+            nonlinear=nonlinear,
+            hubble_units=False,
+            zmin=0,
+            zmax=zmax,
+            kmax=kmax,
+            k_hunit=False,
+            var1=var1,
+            var2=var2,
+        )
         return PK
 
     def get_matter_ps(self, PK, z, k, curly=False, weyl_scaled=True, typ="weyl"):
@@ -737,11 +807,11 @@ class Cosmology:
         ps = PK.P(z, k, grid=False)
         if not weyl_scaled:
             if typ.lower() == "weyl":
-                ps *= k ** -4
+                ps *= k**-4
             elif typ.lower() == "matter-weyl" or typ.lower() == "weyl-matter":
-                ps *= k ** -2
+                ps *= k**-2
         if curly:
-            return ps * k ** 3 / (2 * np.pi ** 2)
+            return ps * k**3 / (2 * np.pi**2)
         return ps
 
     def get_postborn_omega_ps(self, ellmax=20000, acc=1):
@@ -768,9 +838,10 @@ class Cosmology:
         -------
 
         """
-        cmb_ps = self._results.get_cmb_power_spectra(self._pars, lmax=ellmax, spectra=['total'], CMB_unit="muK",
-                                                     raw_cl=True)
-        return cmb_ps['total'][:, 0]
+        cmb_ps = self._results.get_cmb_power_spectra(
+            self._pars, lmax=ellmax, spectra=["total"], CMB_unit="muK", raw_cl=True
+        )
+        return cmb_ps["total"][:, 0]
 
     def get_grad_lens_ps(self, typ, ellmax=6000):
         """
@@ -860,4 +931,3 @@ class Cosmology:
         if return_zeros:
             return np.zeros(np.shape(spectra[:, 0]))
         return spectra[:, index]
-

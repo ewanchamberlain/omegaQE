@@ -32,4 +32,3 @@ do
 echo "$typ"
 #python N0_plancklens.py $EXP "$typ" True gradient 500 30 3000 30 5000
 done
-

@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def rectangular_pulse_steps(arr, min, max):
     """
     Produces the steps of a rectangular pulse function for given boundaries acting on the input array.
@@ -27,6 +28,7 @@ def rectangular_pulse_steps(arr, min, max):
     step[arr > max] = 0
     return step
 
+
 def heaviside_steps(arr, x=0, reverse=False):
     """
     Produces the steps of a heaviside function for a given boundary acting on the input array.
@@ -53,6 +55,7 @@ def heaviside_steps(arr, x=0, reverse=False):
         steps[arr < x] = 0
     return steps
 
+
 def cross(mag1, mag2, theta):
     """
 
@@ -67,6 +70,7 @@ def cross(mag1, mag2, theta):
 
     """
     return mag1 * mag2 * np.sin(theta)
+
 
 def dot(mag1, mag2, theta):
     """
@@ -83,6 +87,7 @@ def dot(mag1, mag2, theta):
     """
     return mag1 * mag2 * np.cos(theta)
 
+
 def cosine_rule(a, b, theta):
     """
 
@@ -97,6 +102,7 @@ def cosine_rule(a, b, theta):
 
     """
     return np.sqrt(a**2 + b**2 - (2 * a * b * np.cos(theta)))
+
 
 def sine_rule(a, theta_a, b=None, theta_b=None):
     """
@@ -116,5 +122,5 @@ def sine_rule(a, theta_a, b=None, theta_b=None):
         print("Must supply either b or theta_b")
         return
     if b is not None:
-        return np.arcsin(b*np.sin(theta_a)/a)
-    return a*np.sin(theta_b)/np.sin(theta_a)
+        return np.arcsin(b * np.sin(theta_a) / a)
+    return a * np.sin(theta_b) / np.sin(theta_a)
