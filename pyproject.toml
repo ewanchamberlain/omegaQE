@@ -2,7 +2,10 @@
 name = "omegaqe"
 version = "0.0.2"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = [
+    "Mathew Robertson <mathew.robertson@sussex.ac.uk>",
+    "Ewan Chamberlain <e.a.chamberlain@sussex.ac.uk>"
+]
 packages = [{ include = "omegaqe" }, { include = "fullsky_sims"}]  # Adjust to your package directory
 
 [tool.poetry.dependencies]
