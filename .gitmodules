@@ -1,0 +1,7 @@
+[submodule "plancklens"]
+	path = plancklens
+	url = https://github.com/carronj/plancklens.git
+[submodule "delensalot"]
+	path = delensalot
+	url = https://github.com/NextGenCMB/delensalot
+	branch = eb_tests

@@ -1,18 +1,22 @@
-[project]
+[tool.poetry]
 name = "omegaqe"
-dynamic = ["version"]
-dependencies = [
-    "numpy",
-    "matplotlib",
-    "scipy",
-    "camb",
-    "ipykernel",
-    "ipywidgets",
-    "tqdm",
-    "healpy",
-    "lenspyx",
-    "vector==0.8.5",
-]
+version = "0.0.2"
+description = ""
+authors = ["Your Name <you@example.com>"]
+packages = [{ include = "omegaqe" }, { include = "fullsky_sims"}]  # Adjust to your package directory
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.11"
+numpy = "<=1.22"
+setuptools = "<=64"
+vector = "0.8.5"
+matplotlib = "*"
+scipy = "*"
+camb = "*"
+ipykernel = "*"
+healpy = "*"
+lenspyx = "*"
+pandas = "*"
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
