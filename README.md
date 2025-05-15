@@ -4,7 +4,7 @@ Forked from [mfrobertson/omegaQE](https://github.com/mfrobertson/omegaQE). Origi
 
 Contains general tools for analytical modelling of large-scale structure power spectra, post-Born bispectra, Fisher-forecasting, Gaussian flat sky simulations, quadratic estimator biases etc.
 
-All code interacting with the [DEMNUni](https://arxiv.org/abs/1505.07148) and [AGORA](https://yomori.github.io/agora/index.html) N-body simulations to produce the results in
+All code interacting with the [DEMNUnii](https://arxiv.org/abs/1505.07148) and [AGORA](https://yomori.github.io/agora/index.html) N-body simulations to produce the results in
 [arXiv:2405.19998](https://arxiv.org/abs/2406.19998) can be found in `fullsky_sims`.
 
 
