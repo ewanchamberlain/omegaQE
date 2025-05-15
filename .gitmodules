@@ -5,3 +5,7 @@
 	path = delensalot
 	url = https://github.com/NextGenCMB/delensalot
 	branch = eb_tests
+[submodule "./LensIt"]
+	path = LensIt
+	url = https://github.com/carronj/LensIt.git
+	branch = master
