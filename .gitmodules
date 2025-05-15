@@ -9,3 +9,7 @@
 	path = LensIt
 	url = https://github.com/carronj/LensIt.git
 	branch = master
+[submodule "lensitbiases"]
+	path = lensitbiases
+	url = https://github.com/NextGenCMB/lensitbiases.git
+	branch = main
