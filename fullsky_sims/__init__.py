@@ -16,7 +16,7 @@ ROOT_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
 HOME_DIR = Path(os.path.expanduser("~"))
 IS_ARTEMIS = os.path.exists("/its")
 DEMNUNII_DIR = (
-    Path("/mnt/lustre/users/astro/ec719/DEMNUnii")
+    Path("/research/astro/cmb/DEMNUnii")
     if IS_ARTEMIS
     else HOME_DIR / "mnt" / "artemis" / "lustre" / "DEMNUnii"
 )
