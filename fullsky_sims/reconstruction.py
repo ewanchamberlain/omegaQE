@@ -270,7 +270,7 @@ class Reconstruction:
         transf = 1 / self.nbody.get_cluster_profile() if bh == "n" else None
         if gmv:
             filt_matrix = self._get_filt_matrix(self.cl_len, noise=True)
-            weighted_maps_lib = filt_simple.library_fullsky_alms_sepTP(
+            weighted_maps_lib = filt_simple.library_fullsky_jTP(
                 os.path.join(self.temp, "ivfs"),
                 self.maps_lib,
                 self.transfer_dict,
