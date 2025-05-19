@@ -275,9 +275,9 @@ class Reconstruction:
                 self.maps_lib,
                 self.transfer_dict,
                 cl_wf,
-                filt_matrix[0],
-                filt_matrix[1],
-                filt_matrix[2],
+                filt_matrix["tt"],
+                filt_matrix["ee"],
+                filt_matrix["bb"],
             )
             self.qresp_lib = qresp.resp_lib_simple(
                 os.path.join(self.temp, "qresp"),
