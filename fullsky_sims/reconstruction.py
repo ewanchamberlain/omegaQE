@@ -270,12 +270,14 @@ class Reconstruction:
         transf = 1 / self.nbody.get_cluster_profile() if bh == "n" else None
         if gmv:
             filt_matrix = self._get_filt_matrix(self.cl_len, noise=True)
-            weighted_maps_lib = filt_simple.library_fullsky_jTP(
+            weighted_maps_lib = filt_simple.library_fullsky_alms_sepTP(
                 os.path.join(self.temp, "ivfs"),
                 self.maps_lib,
                 self.transfer_dict,
                 cl_wf,
-                filt_matrix,
+                filt_matrix[0],
+                filt_matrix[1],
+                filt_matrix[2],
             )
             self.qresp_lib = qresp.resp_lib_simple(
                 os.path.join(self.temp, "qresp"),
