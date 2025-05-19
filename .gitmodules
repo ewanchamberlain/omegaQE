@@ -1,6 +1,7 @@
 [submodule "./plancklens"]
 	path = plancklens
-	url = https://github.com/carronj/plancklens.git
+	url = https://github.com/mfrobertson/plancklens.git
+	branch = master
 [submodule "./delensalot"]
 	path = delensalot
 	url = https://github.com/NextGenCMB/delensalot
@@ -9,7 +10,7 @@
 	path = LensIt
 	url = https://github.com/carronj/LensIt.git
 	branch = master
-[submodule "lensitbiases"]
+[submodule "./lensitbiases"]
 	path = lensitbiases
 	url = https://github.com/NextGenCMB/lensitbiases.git
 	branch = main
