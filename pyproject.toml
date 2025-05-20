@@ -26,6 +26,7 @@ matplotlib = "*"
 camb = "*"
 ipykernel = "*"
 pandas = "*"
+mpi4py = "*"
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
