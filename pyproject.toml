@@ -14,10 +14,10 @@ authors = [
 packages = [{ include = "omegaqe" }, { include = "fullsky_sims"}]
 
 [tool.poetry.dependencies]
-python = ">=3.7"
+python = ">=3.11"
 numpy = "*"
 healpy = "*"
-scipy = "*"
+scipy = ">=1.14"
 lenspyx = "*"
 vector = "0.8.5"
 matplotlib = "*"
