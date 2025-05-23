@@ -44,7 +44,7 @@ def get_glm(nthreads, deflect_typ, cache_diff_loc=None):
     lensing_fac = _lensing_fac()
     klm = None
     if deflect_typ == "dem":
-        kappa_map = wrapper.get_kappa_map()
+        kappa_map = wrapper.get_kappa_map(pb=False)
         klm = wrapper.sht.map2alm(kappa_map, lmax=LMAX_MAP, nthreads=nthreads)
     elif deflect_typ == "pb":
         kappa_map = wrapper.get_kappa_map(pb=True)
@@ -186,7 +186,7 @@ def main(nsims, nthreads, loc, nbody, use_cache_diff, unl_loc):
     cache_diff_loc = loc if use_cache_diff else None
     print("Getting glms...")
     glm_pb = get_glm(nthreads, "pb")
-    # glm_dem = get_glm(nthreads, "dem")
+    glm_dem = get_glm(nthreads, "dem")
     # glm_diff = get_glm(nthreads, "diff", cache_diff_loc)
     print("Getting clms...")
     clm_dem = get_clm(nthreads, "dem")
@@ -209,6 +209,7 @@ def main(nsims, nthreads, loc, nbody, use_cache_diff, unl_loc):
             "pbdem_zero3": (glm_pb, np.zeros(np.size(glm_pb))),
             "diff_zero3": (glm_diff, np.zeros(np.size(glm_diff))),
             "pbdem_dem3": (glm_pb, clm_dem),
+            "dem_dem": (glm, glm),
         }
         unl_alms = get_unlensed_alms(unl_cmb_spectra, sim, unl_loc)
         _save_unl_cmbs(loc, unl_alms, sim, nthreads)

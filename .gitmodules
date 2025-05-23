@@ -1,15 +1,15 @@
 [submodule "./plancklens"]
 	path = plancklens
-	url = https://github.com/mfrobertson/plancklens.git
+	url = https://github.com/ewanchamberlain/plancklens.git
 	branch = master
 [submodule "./delensalot"]
 	path = delensalot
-	url = https://github.com/NextGenCMB/delensalot
-	branch = eb_tests
+	url = https://github.com/ewanchamberlain/delensalot
+	branch = sdev_eb
 [submodule "./LensIt"]
 	path = LensIt
-	url = https://github.com/carronj/LensIt.git
-	branch = master
+	url = https://github.com/ewanchamberlain/LensIt.git
+	branch = scikit
 [submodule "./lensitbiases"]
 	path = lensitbiases
 	url = https://github.com/NextGenCMB/lensitbiases.git
