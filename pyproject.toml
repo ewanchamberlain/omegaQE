@@ -24,7 +24,6 @@ matplotlib = "*"
 camb = "*"
 ipykernel = "*"
 pandas = "*"
-mpi4py = "*"
 delensalot = { path = "./delensalot", develop = true }
 plancklens = { path = "./plancklens", develop = true }
 lensit = { path = "./LensIt", develop = true }

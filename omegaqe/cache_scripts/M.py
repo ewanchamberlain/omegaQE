@@ -2,11 +2,14 @@ import numpy as np
 import omegaqe.tools as tools
 import sys
 from omegaqe.modecoupling import Modecoupling
-from fullsky_sims.agora import Agora
+
+# from fullsky_sims.agora import Agora
 # from fullsky_sims.demnunii import Demnunii
+from fullsky_sims import ROOT_DIR
 
 
-cache_dir = "/mnt/lustre/users/astro/mr671/omegaQE/fullsky_sims/cache/"
+# cache_dir = "/mnt/lustre/users/astro/mr671/omegaQE/fullsky_sims/cache/"
+cache_dir = str(ROOT_DIR / "cache")
 
 
 def M_matrix(mode, ells, star, typ):
@@ -16,16 +19,18 @@ def M_matrix(mode, ells, star, typ):
     for iii, ell in enumerate(ells):
         print("\r", end="")
         print(f"{iii}/{Nells}", end="")
-        # M[iii, :] = mode.components(np.ones(Nells) * ell, ells, typ=typ, star=star, gal_distro="LSST_gold")
         M[iii, :] = mode.components(
-            np.ones(Nells) * ell, ells, typ=typ, star=star, gal_distro="agora"
+            np.ones(Nells) * ell, ells, typ=typ, star=star, gal_distro="LSST_gold"
         )
+        # M[iii, :] = mode.components(
+        #     np.ones(Nells) * ell, ells, typ=typ, star=star, gal_distro="agora"
+        # )
     return M
 
 
 def save(ells, M, star, typ):
     sep = tools.getFileSep()
-    folder = cache_dir + sep + "_M_dm" + sep + typ + sep + f"{ellmax}_{Nells}"
+    folder = cache_dir + sep + "_M" + sep + typ + sep + f"{ellmax}_{Nells}"
     if star:
         folder += "_s"
     filename_M = "M.npy"
@@ -37,7 +42,7 @@ def save(ells, M, star, typ):
 
 
 def main(ellmax, Nells, star, typ):
-    ag = Agora()
+    # ag = Agora()
     power = ag.power
     mode = Modecoupling(powerspectra=power)
     mode.use_LSST_abcde = False
