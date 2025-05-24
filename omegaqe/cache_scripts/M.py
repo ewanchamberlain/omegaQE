@@ -4,7 +4,7 @@ import sys
 from omegaqe.modecoupling import Modecoupling
 
 # from fullsky_sims.agora import Agora
-# from fullsky_sims.demnunii import Demnunii
+from fullsky_sims.demnunii import Demnunii
 from fullsky_sims import ROOT_DIR
 
 
@@ -42,21 +42,25 @@ def save(ells, M, star, typ):
 
 
 def main(ellmax, Nells, star, typ):
-    # ag = Agora()
-    power = ag.power
-    mode = Modecoupling(powerspectra=power)
-    mode.use_LSST_abcde = False
-
-    # dm = Demnunii(nthreads=11)
-    # PK = dm.get_PK()
-    # power = dm.power
-    # power.matter_PK = PK
+    # # ag = Agora()
+    # power = None#ag.power
     # mode = Modecoupling(powerspectra=power)
-    # mode._powerspectra.matter_PK = PK
-    # mode.matter_PK = PK
-    ells = mode.generate_sample_ells(ellmax, Nells)
-    M = M_matrix(mode, ells, star, typ)
-    save(ells, M, star, typ)
+    # mode.use_LSST_abcde = False
+
+    dm = Demnunii(nthreads=11)
+    PK = dm.get_PK()
+    power = dm.power
+    power.matter_PK = PK
+    mode = Modecoupling(powerspectra=power)
+    mode._powerspectra.matter_PK = PK
+    mode.matter_PK = PK
+    fields = ["k", "g", "I"]
+    for i, field_1 in enumerate(fields):
+        for field_2 in fields[i:]:
+            typ = f"{field_1}{field_2}"
+            ells = mode.generate_sample_ells(ellmax, Nells)
+            M = M_matrix(mode, ells, star, typ)
+            save(ells, M, star, typ)
 
 
 if __name__ == "__main__":
