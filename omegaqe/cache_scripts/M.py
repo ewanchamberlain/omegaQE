@@ -55,8 +55,8 @@ def main(ellmax, Nells, star, typ):
     mode._powerspectra.matter_PK = PK
     mode.matter_PK = PK
     fields = ["k", "g", "I"]
-    for i, field_1 in enumerate(fields):
-        for field_2 in fields[i:]:
+    for field_1 in fields:
+        for field_2 in fields:
             typ = f"{field_1}{field_2}"
             ells = mode.generate_sample_ells(ellmax, Nells)
             M = M_matrix(mode, ells, star, typ)
