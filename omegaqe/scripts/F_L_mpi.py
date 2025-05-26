@@ -132,7 +132,8 @@ def _main(
         Lmax=Lcut_max,
         mag_bias=fish.covariance.mag_bias,
         omega=omega,
-        pB_only=pB_only,
+        kappa_typ="total",
+        # pB_only=pB_only,
     )
     # _, F_L = fish.get_F_L(typ, Ls_samp[my_start: my_end], dL2=dL2, Ntheta=Ntheta, nu=nu, return_C_inv=False, gal_distro="agora", use_cache=True, Lmin=Lcut_min, Lmax=Lcut_max)
     end_time = MPI.Wtime()
