@@ -209,7 +209,7 @@ def main(nsims, nthreads, loc, nbody, use_cache_diff, unl_loc):
             "pbdem_zero3": (glm_pb, np.zeros(np.size(glm_pb))),
             "diff_zero3": (glm_diff, np.zeros(np.size(glm_diff))),
             "pbdem_dem3": (glm_pb, clm_dem),
-            "dem_dem": (glm, glm),
+            "dem_dem": (glm_dem, glm_dem),
         }
         unl_alms = get_unlensed_alms(unl_cmb_spectra, sim, unl_loc)
         _save_unl_cmbs(loc, unl_alms, sim, nthreads)
