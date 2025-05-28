@@ -1,9 +1,14 @@
-from omegaqe.tools import getFileSep, parse_boolean
-import fullsky_sims
-from lenspyx.utils_hp import synalm
-import numpy as np
-import sys
+import argparse
 import os
+import sys
+from configparser import ConfigParser
+
+import numpy as np
+from lenspyx.utils_hp import synalm
+
+import fullsky_sims
+from omegaqe import dir_path
+from omegaqe.tools import getFileSep, parse_boolean
 
 sep = getFileSep()
 LMAX_MAP = 6000
@@ -206,9 +211,9 @@ def main(nsims, nthreads, loc, nbody, use_cache_diff, unl_loc):
         glm_diff = get_glm(nthreads, "diff", cache_diff_loc)
         clm_diff = get_clm(nthreads, "diff", cache_diff_loc)
         deflect_configs = {
-            "pbdem_zero3": (glm_pb, np.zeros(np.size(glm_pb))),
-            "diff_zero3": (glm_diff, np.zeros(np.size(glm_diff))),
-            "pbdem_dem3": (glm_pb, clm_dem),
+            # "pbdem_zero3": (glm_pb, np.zeros(np.size(glm_pb))),
+            # "diff_zero3": (glm_diff, np.zeros(np.size(glm_diff))),
+            # "pbdem_dem3": (glm_pb, clm_dem),
             "dem_dem": (glm_dem, glm_dem),
         }
         unl_alms = get_unlensed_alms(unl_cmb_spectra, sim, unl_loc)
@@ -227,17 +232,26 @@ def main(nsims, nthreads, loc, nbody, use_cache_diff, unl_loc):
 
 
 if __name__ == "__main__":
-    args = sys.argv[1:]
-    if len(args) != 5 and len(args) != 6:
-        raise ValueError(
-            "Arguments should be nsims nthreads loc nbody use_cache_diff unl_loc"
-        )
-    nsims = int(args[0])
-    nthreads = int(args[1])
-    loc = str(args[2])
-    nbody = str(args[3])
-    use_cache_diff = parse_boolean(args[4])
-    unl_loc = str(args[5]) if len(args) == 6 else None
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-p",
+        "--path",
+        type=str,
+        default=f"{dir_path}/scripts/config.ini",
+        help="Path to config file",
+    )
+    args = parser.parse_args()
+    config = ConfigParser()
+    config.read(args.path)
+    section = "len_cmbs"
+    if not config.has_section(section):
+        raise ValueError(f"Config file {args.path} does not contain section '{section}'")
+    nsims = config.getint(section, "nsims")
+    nthreads = config.getint(section, "nthreads")
+    loc = os.path.expanduser(config.get(section, "loc"))
+    nbody = config.get(section, "nbody")
+    use_cache_diff = config.getboolean(section, "use_cache_diff")
+    unl_loc = config.get(section, "unl_loc", fallback=None)
     print("Setup:")
     print(f"\t nsims: {nsims}")
     print(f"\t nthreads: {nthreads}")

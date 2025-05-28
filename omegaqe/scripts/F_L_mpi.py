@@ -180,28 +180,29 @@ if __name__ == "__main__":
         "-p",
         "--path",
         type=str,
-        default=f"{dir_path}/scripts/F_L_mpi.ini",
+        default=f"{dir_path}/scripts/config.ini",
         help="Path to config file",
     )
     args = parser.parse_args()
     config = ConfigParser()
     config.read(args.path)
-    if not config.has_section("Settings"):
-        raise ValueError(f"Config file {args.path} does not contain section 'Settings'")
+    section = "F_L_mpi"
+    if not config.has_section(section):
+        raise ValueError(f"Config file {args.path} does not contain section '{section}'")
     _main(
-        config.get("Settings", "typ"),
-        config.get("Settings", "exp"),
-        config.get("Settings", "fields"),
-        config.getboolean("Settings", "gmv"),
-        config.getint("Settings", "Lmax"),
-        config.getint("Settings", "Lcut_min"),
-        config.getint("Settings", "Lcut_max"),
-        config.getint("Settings", "dL2"),
-        config.getint("Settings", "Ntheta"),
-        config.getint("Settings", "N_Ls"),
-        config.getboolean("Settings", "iter"),
-        config.getint("Settings", "mag_bias"),
-        config.get("Settings", "kappa_typ"),
-        os.path.expanduser(config.get("Settings", "out_dir")),
-        config.get("Settings", "_id"),
+        config.get(section, "typ"),
+        config.get(section, "exp"),
+        config.get(section, "fields"),
+        config.getboolean(section, "gmv"),
+        config.getint(section, "Lmax"),
+        config.getint(section, "Lcut_min"),
+        config.getint(section, "Lcut_max"),
+        config.getint(section, "dL2"),
+        config.getint(section, "Ntheta"),
+        config.getint(section, "N_Ls"),
+        config.getboolean(section, "iter"),
+        config.getint(section, "mag_bias"),
+        config.get(section, "kappa_typ"),
+        os.path.expanduser(config.get(section, "out_dir")),
+        config.get(section, "_id"),
     )
