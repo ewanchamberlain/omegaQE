@@ -1,32 +1,38 @@
-from mpi4py import MPI
-import numpy as np
-import omegaqe
-from omegaqe.fisher import Fisher
-from omegaqe.tools import parse_boolean, mpi
+import argparse
+from logging import config
 import os
 import sys
-from scipy.interpolate import InterpolatedUnivariateSpline
+from configparser import ConfigParser
+from pathlib import Path
+
+import numpy as np
+import omegaqe
 from fullsky_sims.demnunii import Demnunii
+from mpi4py import MPI
+from omegaqe import dir_path
+from omegaqe.fisher import Fisher
+from omegaqe.tools import mpi, parse_boolean
+from scipy.interpolate import InterpolatedUnivariateSpline
+
 # from fullsky_sims.agora import Agora
 
 
 def _main(
-    typ,
-    exp,
-    fields,
-    gmv,
-    Lmax,
-    Lcut_min,
-    Lcut_max,
-    dL2,
-    Ntheta,
-    N_Ls,
-    iter,
-    mag_bias,
-    omega,
-    pB_only,
-    out_dir,
-    _id,
+    typ: str,
+    exp: str,
+    fields: str,
+    gmv: bool,
+    Lmax: int,
+    Lcut_min: int,
+    Lcut_max: int,
+    dL2: int,
+    Ntheta: int,
+    N_Ls: int,
+    iter: bool,
+    mag_bias: int,
+    kappa_typ: str,
+    out_dir: str,
+    _id: str,
 ):
     # get basic information about the MPI communicator
     world_comm = MPI.COMM_WORLD
@@ -69,13 +75,12 @@ def _main(
         fish.covariance.mag_bias = True
         # fish.covariance.power.cosmo.s_spline = fish.covariance.power.cosmo.get_s_spline(mag_bias)
         fish.covariance.power.cosmo.set_magbias(mag_bias)
-    if not omega:
-        mpi.output(
-            "Changing galaxy number density to 7 (equivalent for unWISE)", my_rank, _id
-        )
-        fish.covariance.noise.n = fish.covariance.noise.n = (
-            7  # n=7 for 1 billion gals (unWise)
-        )
+    mpi.output(
+        "Changing galaxy number density to 7 (equivalent for unWISE)", my_rank, _id
+    )
+    fish.covariance.noise.n = fish.covariance.noise.n = (
+        7  # n=7 for 1 billion gals (unWise)
+    )
     fish.covariance.power = dm.power
     fish.power = dm.power
 
@@ -131,8 +136,7 @@ def _main(
         Lmin=Lcut_min,
         Lmax=Lcut_max,
         mag_bias=fish.covariance.mag_bias,
-        omega=omega,
-        kappa_typ="total",
+        kappa_typ=kappa_typ,
         # pB_only=pB_only,
     )
     # _, F_L = fish.get_F_L(typ, Ls_samp[my_start: my_end], dL2=dL2, Ntheta=Ntheta, nu=nu, return_C_inv=False, gal_distro="agora", use_cache=True, Lmin=Lcut_min, Lmax=Lcut_max)
@@ -159,8 +163,8 @@ def _main(
         if not os.path.isdir(out_dir):
             os.makedirs(out_dir)
         filename_ext = f"_u{mag_bias}" if fish.covariance.mag_bias else ""
-        filename_ext += "_k" if not omega else ""
-        filename_ext += "_pB" if pB_only else ""
+        filename_ext += "_k"
+        filename_ext += "_pB" if "pB" in kappa_typ else ""
         np.save(out_dir + "/Ls" + filename_ext, Ls_samp)
         np.save(out_dir + "/F_L" + filename_ext, F_L_arr)
         end_time_tot = MPI.Wtime()
@@ -171,42 +175,33 @@ def _main(
 
 
 if __name__ == "__main__":
-    args = sys.argv[1:]
-    if len(args) != 16:
-        raise ValueError(
-            "Arguments should be typ exp fields gmv Lmax Lcut_min Lcut_max dL2 Ntheta N_Ls iter mag_bias omega pB_only out_dir _id"
-        )
-    typ = str(args[0])
-    exp = str(args[1])
-    fields = str(args[2])
-    gmv = parse_boolean(args[3])
-    Lmax = int(args[4])
-    Lcut_min = int(args[5])
-    Lcut_max = int(args[6])
-    dL2 = int(args[7])
-    Ntheta = int(args[8])
-    N_Ls = int(args[9])
-    iter = parse_boolean(args[10])
-    mag_bias = int(args[11])
-    omega = parse_boolean(args[12])
-    pB_only = parse_boolean(args[13])
-    out_dir = args[14]
-    _id = args[15]
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-p",
+        "--path",
+        type=str,
+        default=f"{dir_path}/scripts/F_L_mpi.ini",
+        help="Path to config file",
+    )
+    args = parser.parse_args()
+    config = ConfigParser()
+    config.read(args.path)
+    if not config.has_section("Settings"):
+        raise ValueError(f"Config file {args.path} does not contain section 'Settings'")
     _main(
-        typ,
-        exp,
-        fields,
-        gmv,
-        Lmax,
-        Lcut_min,
-        Lcut_max,
-        dL2,
-        Ntheta,
-        N_Ls,
-        iter,
-        mag_bias,
-        omega,
-        pB_only,
-        out_dir,
-        _id,
+        config.get("Settings", "typ"),
+        config.get("Settings", "exp"),
+        config.get("Settings", "fields"),
+        config.getboolean("Settings", "gmv"),
+        config.getint("Settings", "Lmax"),
+        config.getint("Settings", "Lcut_min"),
+        config.getint("Settings", "Lcut_max"),
+        config.getint("Settings", "dL2"),
+        config.getint("Settings", "Ntheta"),
+        config.getint("Settings", "N_Ls"),
+        config.getboolean("Settings", "iter"),
+        config.getint("Settings", "mag_bias"),
+        config.get("Settings", "kappa_typ"),
+        os.path.expanduser(config.get("Settings", "out_dir")),
+        config.get("Settings", "_id"),
     )
