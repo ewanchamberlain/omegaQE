@@ -13,8 +13,8 @@ def main():
     C_omega_spline = InterpolatedUnivariateSpline(ells, C_omega)
     C_omega_final = np.zeros(Lmax + 1)
     C_omega_final[1:] = C_omega_spline(np.arange(1, Lmax + 1))
-    np.save(f"{omegaqe.CACHE_DIR}{sep}_C_omega{sep}C_omega_new.npy", C_omega_final)
-    np.save(f"{omegaqe.CACHE_DIR}{sep}_C_omega{sep}Ls_new.npy", np.arange(Lmax + 1))
+    np.save(f"{omegaqe.CACHE_DIR}{sep}_C_omega{sep}C_omega.npy", C_omega_final)
+    np.save(f"{omegaqe.CACHE_DIR}{sep}_C_omega{sep}Ls.npy", np.arange(Lmax + 1))
 
 
 if __name__ == "__main__":
