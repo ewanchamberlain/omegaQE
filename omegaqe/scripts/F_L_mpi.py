@@ -57,6 +57,7 @@ def _main(
 
     mpi.output("Initialising Fisher object...", my_rank, _id)
     dm = Demnunii()
+    dm.cosmo.b1 = 0
     # dm.power.cosmo._pars.NonLinearModel.set_params(halofit_version='mead') #tmp
     # dm.power.matter_PK = dm.power.cosmo.get_matter_PK(typ="matter")  #tmp
     fish = Fisher(
@@ -91,8 +92,11 @@ def _main(
     # fish.covariance.shot_noise = [2.25, 3.11, 3.09, 2.61, 2.00]
     # fish.covariance.noise.full_sky = True
 
-    mpi.output("Setting up bispectra splines...", my_rank, _id)
-    fish.setup_bispectra(Nell=200, path=f"{omegaqe.CACHE_DIR}/_M")
+    # tmp comments
+    # mpi.output("Setting up bispectra splines...", my_rank, _id)
+    # fish.setup_bispectra(Nell=200,path=f"{omegaqe.CACHE_DIR}/_M")
+
+    # AGORA
     # fish.setup_bispectra(Nell=200,path=f"{omegaqe.CACHE_DIR}_ag/_M_dm")
 
     mpi.output("    Preparing C_inv...", my_rank, _id)
@@ -136,8 +140,8 @@ def _main(
         Lmin=Lcut_min,
         Lmax=Lcut_max,
         mag_bias=fish.covariance.mag_bias,
+        omega=omega,
         kappa_typ=kappa_typ,
-        # pB_only=pB_only,
     )
     # _, F_L = fish.get_F_L(typ, Ls_samp[my_start: my_end], dL2=dL2, Ntheta=Ntheta, nu=nu, return_C_inv=False, gal_distro="agora", use_cache=True, Lmin=Lcut_min, Lmax=Lcut_max)
     end_time = MPI.Wtime()
@@ -163,8 +167,7 @@ def _main(
         if not os.path.isdir(out_dir):
             os.makedirs(out_dir)
         filename_ext = f"_u{mag_bias}" if fish.covariance.mag_bias else ""
-        filename_ext += "_k"
-        filename_ext += "_pB" if "pB" in kappa_typ else ""
+        filename_ext += f"_k_{kappa_typ}" if not omega else ""
         np.save(out_dir + "/Ls" + filename_ext, Ls_samp)
         np.save(out_dir + "/F_L" + filename_ext, F_L_arr)
         end_time_tot = MPI.Wtime()
