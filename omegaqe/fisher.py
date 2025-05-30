@@ -1186,7 +1186,8 @@ class Fisher:
                 F_L += factor * F_L_tmp
         if not omega:
             F_L *= C_omega_spline(Ls)
-            C_k2k2 = pb.pb22_kappa_ps(Ls)
+            zstar = self.power.cosmo._results.get_derived_params()["zstar"]
+            C_k2k2 = pb.pb22_kappa_ps(Ls, zmax=zstar)
             F_L /= C_k2k2
         # if perms != np.size(typs) ** 4:
         #     raise ValueError(f"{perms} permutations computed, should be {np.size(typs) ** 4}")
