@@ -120,7 +120,7 @@ def _main(
 
     mpi.output("Setting up parallelisation of workload...", my_rank, _id)
 
-    Ls_samp = fish.covariance.get_log_sample_Ls(Lmin=2, Lmax=Lmax, Nells=N_Ls, dL_small=1)
+    Ls_samp = np.geomspace(2, Lmax, N_Ls)
 
     workloads = mpi.get_workloads(N_Ls, world_size)
     my_start, my_end = mpi.get_start_end(my_rank, workloads)

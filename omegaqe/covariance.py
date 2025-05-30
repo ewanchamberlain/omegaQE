@@ -23,6 +23,7 @@ class Covariance:
         floaty = Lmax / 1000
         samp1 = np.arange(Lmin, floaty * 10, dL_small)
         samp2 = np.logspace(1, 3, Nells - np.size(samp1)) * floaty
+        np.geomspace(Lmin, Lmax, Nells - np.size(samp1), endpoint=False, dtype=float)
         return np.concatenate((samp1, samp2))
 
     def setup_cmb_noise(
