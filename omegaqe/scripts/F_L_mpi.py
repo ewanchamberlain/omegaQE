@@ -188,7 +188,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     config = ConfigParser()
-    config.read(args.path)
+    config.read(args.config)
     section = "F_L_mpi"
     if not config.has_section(section):
         raise ValueError(f"Config file {args.path} does not contain section '{section}'")
