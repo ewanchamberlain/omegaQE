@@ -167,7 +167,7 @@ def _main(
         if not os.path.isdir(out_dir):
             os.makedirs(out_dir)
         filename_ext = f"_u{mag_bias}" if fish.covariance.mag_bias else ""
-        filename_ext += f"_k_{kappa_typ}" if not omega else ""
+        filename_ext += f"_k_{kappa_typ}"
         np.save(out_dir + "/Ls" + filename_ext, Ls_samp)
         np.save(out_dir + "/F_L" + filename_ext, F_L_arr)
         end_time_tot = MPI.Wtime()
