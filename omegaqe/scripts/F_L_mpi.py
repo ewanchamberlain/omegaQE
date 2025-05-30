@@ -180,8 +180,8 @@ def _main(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-p",
-        "--path",
+        "-c",
+        "--config",
         type=str,
         default=f"{dir_path}/scripts/config.ini",
         help="Path to config file",
