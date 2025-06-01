@@ -9,6 +9,8 @@ class Template:
         fields,
         Lmin=30,
         Lmax=3000,
+        dL2=1,
+        Ntheta=2000,
         tracer_noise=False,
         use_kappa_rec=False,
         cmb_lens_qe_typ="TEB",
@@ -21,6 +23,8 @@ class Template:
     ):
         self.Lmin = Lmin
         self.Lmax = Lmax
+        self.dL2 = dL2
+        self.Ntheta = Ntheta
         self.fields = fields
         self.lss_fields = self.fields.fields.replace("u", "g")
         self.lss_fields = self.fields.fields.replace("r", "g")
@@ -92,10 +96,10 @@ class Template:
         else:
             filename_ext = f"_u{self.fields.u_typ}" if "u" in self.fields.fields else ""
             Ls = np.load(
-                f"{self.fields.nbody.cache_dir}/_F_L/{self.lss_fields}/{self.fields.exp}/{qe_typ}/{fields}/30_3000/1_2000/Ls{filename_ext}.npy"
+                f"{self.fields.nbody.cache_dir}/_F_L/{self.lss_fields}/{self.fields.exp}/{qe_typ}/{fields}/{self.Lmin}_{self.Lmax}/{self.dL2}_{self.Ntheta}/Ls{filename_ext}.npy"
             )
             F_L = np.load(
-                f"{self.fields.nbody.cache_dir}/_F_L/{self.lss_fields}/{self.fields.exp}/{qe_typ}/{fields}/30_3000/1_2000/F_L{filename_ext}.npy"
+                f"{self.fields.nbody.cache_dir}/_F_L/{self.lss_fields}/{self.fields.exp}/{qe_typ}/{fields}/{self.Lmin}_{self.Lmax}/{self.dL2}_{self.Ntheta}/F_L{filename_ext}.npy"
             )
             F_L_spline = InterpolatedUnivariateSpline(Ls, F_L)
             Ls_sample = np.arange(self.Lmax_map + 1)
