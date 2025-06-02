@@ -111,13 +111,6 @@ def _main(
     world_comm.Bcast([C_inv, MPI.DOUBLE], root=0)
     fish.C_inv = C_inv
 
-    mpi.output("    Storing C_omega_spline...", my_rank, _id)
-    C_omega = np.load(f"{omegaqe.CACHE_DIR}/_C_omega/C_omega.npy")
-    omega_Ls = np.load(f"{omegaqe.CACHE_DIR}/_C_omega/Ls.npy")
-    # C_omega = np.load(f"{omegaqe.CACHE_DIR}_ag/_C_omega/C_omega.npy")
-    # omega_Ls = np.load(f"{omegaqe.CACHE_DIR}_ag/_C_omega/Ls.npy")
-    fish.C_omega_spline = InterpolatedUnivariateSpline(omega_Ls, C_omega)
-
     mpi.output("Setting up parallelisation of workload...", my_rank, _id)
 
     Ls_samp = np.geomspace(2, Lmax, N_Ls)

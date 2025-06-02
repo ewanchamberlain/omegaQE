@@ -1095,9 +1095,7 @@ class Fisher:
                 C1[L1 < Lmin] = 0
                 covs = C1 * C2_spline(L2)
                 I_tmp[jjj] = 2 * np.sum(L2 * dTheta * bi1 * bi2 * covs)
-            F_L[iii] = InterpolatedUnivariateSpline(Ls2, I_tmp).integral(Lmin, Lmax) / (
-                2 * C_omega_spline(L3)
-            )
+            F_L[iii] = InterpolatedUnivariateSpline(Ls2, I_tmp).integral(Lmin, Lmax) / 2
         F_L *= 1 / ((2 * np.pi) ** 2)
         return F_L
 
@@ -1123,7 +1121,7 @@ class Fisher:
             self.covariance.mag_bias = True
         if use_cache:
             C_inv = self.C_inv
-            C_omega_spline = self.C_omega_spline
+            C_omega_spline = self.C_omega_spline if omega else None
         else:
             C_inv = self.covariance.get_C_inv(
                 typs, 5000, nu, gal_bins, gal_distro=gal_distro
@@ -1131,8 +1129,11 @@ class Fisher:
             omega_ells = np.geomspace(
                 int(np.floor(np.min(Ls))), int(np.ceil(np.max(Ls))), 100
             )
-            C_omega = pb.omega_ps(omega_ells)
-            C_omega_spline = InterpolatedUnivariateSpline(omega_ells, C_omega)
+            if omega:
+                C_omega = pb.omega_ps(omega_ells)
+            C_omega_spline = (
+                InterpolatedUnivariateSpline(omega_ells, C_omega) if omega else None
+            )
         all_combos = typs[:, None] + typs[None, :]
         combos = all_combos.flatten()
         Ncombos = np.size(combos)
@@ -1185,7 +1186,6 @@ class Fisher:
                 perms += factor
                 F_L += factor * F_L_tmp
         if not omega:
-            F_L *= C_omega_spline(Ls)
             zstar = self.power.cosmo._results.get_derived_params()["zstar"]
             C_k2k2 = pb.pb22_kappa_ps(Ls, zmax=zstar)
             F_L /= C_k2k2
