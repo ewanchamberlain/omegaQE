@@ -324,7 +324,7 @@ class Fisher:
         self.change_cosmology(H0=H0)
         return (bi_x_h - bi_x_h_minus) / (2 * np.abs(h))
 
-    def _get_thetas(self, Ntheta, max_angle=np.pi):
+    def _get_thetas(self, Ntheta, max_angle=2 * np.pi):
         dTheta = max_angle / Ntheta
         thetas = np.arange(dTheta, max_angle + dTheta, dTheta, dtype=float)
         return thetas, dTheta
@@ -1041,7 +1041,7 @@ class Fisher:
             for jjj, L2 in enumerate(Ls2):
                 L3_vec = vector.obj(rho=L3, phi=0)
                 L2_vec = vector.obj(rho=L2, phi=thetas)
-                L1_vec = L3_vec - L2_vec
+                L1_vec = -L3_vec - L2_vec
                 L1 = L1_vec.rho
                 thetas12 = L1_vec.deltaphi(L2_vec)
                 bi1 = self.bi.get_bispectrum(
@@ -1161,7 +1161,7 @@ class Fisher:
                 )
                 if combos[iii] != combos[jjj]:
                     factor = 2  # This only works if both bispectra are the same (so not true for mag bias or pB-kappa)
-                    if mag_bias or (not omega and not kappa_typ.lower() != "pb_1perm"):
+                    if mag_bias or (not omega and kappa_typ.lower() == "pb_1perm"):
                         typ2 = "opt_" + combos[jjj] + combos[iii]
                         F_L_tmp += self._get_F_L_element_sample(
                             typs,
