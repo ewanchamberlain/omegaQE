@@ -325,7 +325,7 @@ def _bias_calc(
         I_theta1 = np.zeros(np.size(thetas1))
         for jjj, theta1 in enumerate(thetas1):
             L1_vec = vector.obj(rho=L1, phi=theta1)
-            L2_vec = L_vec - L1_vec
+            L2_vec = -L_vec - L1_vec
             L2 = L2_vec.rho
             w2 = 0 if (L2 < Lmin_lss or L2 > Lmax_lss) else 1
             if w2 != 0:
@@ -333,12 +333,12 @@ def _bias_calc(
                     bias_typ, bi_typ, L1, L2, L1_vec.deltaphi(L2_vec)
                 )
                 l_vec = vector.obj(rho=ls[None, :], phi=thetasl[:, None])
-                l_primprim_vec = L1_vec - l_vec
+                l_primprim_vec = -L1_vec - l_vec
                 l_primprims = l_primprim_vec.rho
                 w_primprim = np.ones(np.shape(l_primprims))
                 w_primprim[l_primprims < Lmin_cmb] = 0
                 w_primprim[l_primprims > Lmax_cmb] = 0
-                l_prim_vec = L_vec - l_vec
+                l_prim_vec = -L_vec - l_vec
                 l_prims = l_prim_vec.rho
                 w_prim = np.ones(np.shape(l_prims))
                 w_prim[l_prims < Lmin_cmb] = 0

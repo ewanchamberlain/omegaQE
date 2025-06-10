@@ -324,7 +324,7 @@ class Fisher:
         self.change_cosmology(H0=H0)
         return (bi_x_h - bi_x_h_minus) / (2 * np.abs(h))
 
-    def _get_thetas(self, Ntheta, max_angle=2 * np.pi):
+    def _get_thetas(self, Ntheta, max_angle=np.pi):
         dTheta = max_angle / Ntheta
         thetas = np.arange(dTheta, max_angle + dTheta, dTheta, dtype=float)
         return thetas, dTheta

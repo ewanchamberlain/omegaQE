@@ -79,9 +79,8 @@ def _main(
     mpi.output(
         "Changing galaxy number density to 7 (equivalent for unWISE)", my_rank, _id
     )
-    fish.covariance.noise.n = fish.covariance.noise.n = (
-        7  # n=7 for 1 billion gals (unWise)
-    )
+    # n=7 for 1 billion gals (unWise)
+    fish.covariance.noise.n = fish.covariance.noise.n = 7
     fish.covariance.power = dm.power
     fish.power = dm.power
 
@@ -163,6 +162,7 @@ def _main(
         filename_ext += f"_k_{kappa_typ}"
         np.save(out_dir + "/Ls" + filename_ext, Ls_samp)
         np.save(out_dir + "/F_L" + filename_ext, F_L_arr)
+        print(f"Saved at {out_dir}")
         end_time_tot = MPI.Wtime()
         print("Total time: " + str(end_time_tot - start_time_tot))
         mpi.output("Total time: " + str(end_time_tot - start_time_tot), my_rank, _id)
