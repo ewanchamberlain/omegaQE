@@ -19,8 +19,8 @@ def _get_modecoupling(M_path, M_ellmax, M_Nell, cmb, zmin, zmax, Lmax, powerspec
             M_path + sep + mode_typ + sep + f"{M_ellmax}_{M_Nell}" + sep + "M.npy"
         )
         return mode.spline(ells_sample, M)
-    print("Generating new M_ww... ")
     mode_typ = "kk" if cmb else "ss"
+    print(f"Generating new M_{mode_typ}... ")
     return mode.spline(
         ells_sample=mode.generate_sample_ells(M_ellmax, M_Nell),
         typ=mode_typ,

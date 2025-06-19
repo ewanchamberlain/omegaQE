@@ -36,6 +36,7 @@ class Fisher:
         data_dir=omegaqe.DATA_DIR,
         setup_bispectra=False,
         cosmology=None,
+        C_k2k2_spline=None,
     ):
         """
         Constructor
@@ -52,7 +53,7 @@ class Fisher:
         self.power = self.covariance.power
         self.opt_I_cache = None
         self.C_inv = None
-        self.C_omega_spline = None
+        self.C_k2k2_spline = C_k2k2_spline
 
     def _files_match(self, ell_file, M_file):
         if ell_file[:-8] == M_file[:-5]:
@@ -1186,9 +1187,7 @@ class Fisher:
                 perms += factor
                 F_L += factor * F_L_tmp
         if not omega:
-            zstar = self.power.cosmo._results.get_derived_params()["zstar"]
-            C_k2k2 = pb.pb22_kappa_ps(Ls, zmax=zstar)
-            F_L /= C_k2k2
+            F_L /= self.C_k2k2_spline(Ls)
         # if perms != np.size(typs) ** 4:
         #     raise ValueError(f"{perms} permutations computed, should be {np.size(typs) ** 4}")
         if return_C_inv:

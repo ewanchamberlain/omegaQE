@@ -11,6 +11,7 @@ from fullsky_sims.demnunii import Demnunii
 from mpi4py import MPI
 from omegaqe import dir_path
 from omegaqe.fisher import Fisher
+from omegaqe.postborn import pb22_kappa_ps
 from omegaqe.tools import mpi, parse_boolean
 from scipy.interpolate import InterpolatedUnivariateSpline
 
@@ -60,6 +61,10 @@ def _main(
     dm.cosmo.b1 = 0
     # dm.power.cosmo._pars.NonLinearModel.set_params(halofit_version='mead') #tmp
     # dm.power.matter_PK = dm.power.cosmo.get_matter_PK(typ="matter")  #tmp
+    Ls = np.geomspace(2, Lmax, N_Ls)
+    zmax = dm.cosmo._results.get_derived_params()["zstar"]
+    clk2k2 = pb22_kappa_ps(Ls, zmax=zmax)
+    clk2k2_spline = InterpolatedUnivariateSpline(Ls, clk2k2)
     fish = Fisher(
         exp=exp,
         qe=fields,
@@ -70,6 +75,7 @@ def _main(
         iter_ext=False,
         data_dir=f"{omegaqe.DATA_DIR}",
         cosmology=dm.cosmo,
+        C_k2k2_spline=clk2k2_spline,
     )
     if mag_bias != 0:
         mpi.output(f"Setting up magbias {mag_bias}", my_rank, _id)
