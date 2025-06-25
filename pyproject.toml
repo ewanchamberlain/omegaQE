@@ -15,7 +15,7 @@ packages = [{ include = "omegaqe" }, { include = "fullsky_sims"}]
 
 [tool.poetry.dependencies]
 python = ">=3.11"
-numpy = "*"
+numpy = ">=2"
 healpy = "*"
 scipy = ">=1.14"
 lenspyx = "*"
@@ -24,10 +24,10 @@ matplotlib = "*"
 camb = "*"
 ipykernel = "*"
 pandas = "*"
-delensalot = { path = "./delensalot", develop = true }
-plancklens = { path = "./plancklens", develop = true }
-lensit = { path = "./LensIt", develop = true }
-lensitbiases = { path = "./lensitbiases", develop = true }
+delensalot = { path = "./submodules/delensalot", develop = true }
+plancklens = { path = "./submodules/plancklens", develop = true }
+lensit = { path = "./submodules/LensIt", develop = true }
+lensitbiases = { path = "./submodules/lensitbiases", develop = true }
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
