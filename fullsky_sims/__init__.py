@@ -18,5 +18,5 @@ IS_ARTEMIS = os.path.exists("/its")
 DEMNUNII_DIR = (
     Path("/research/astro/cmb/DEMNUnii")
     if IS_ARTEMIS
-    else HOME_DIR / "mnt" / "artemis" / "lustre" / "DEMNUnii"
+    else HOME_DIR / "Post-Born" / "data" / "mount" / "DEMNUnii" 
 )

@@ -63,8 +63,7 @@ def _main(
     # dm.power.matter_PK = dm.power.cosmo.get_matter_PK(typ="matter")  #tmp
     Ls = np.geomspace(2, Lmax, N_Ls)
     zmax = dm.cosmo._results.get_derived_params()["zstar"]
-    clk2k2 = pb22_kappa_ps(Ls, zmax=zmax)
-    clk2k2_spline = InterpolatedUnivariateSpline(Ls, clk2k2)
+    clk2k2 = pb22_kappa_ps(Ls, zmax=zmax, M_Nell=200, Nell_prim=3_000, Ntheta=2_000)
     fish = Fisher(
         exp=exp,
         qe=fields,
@@ -75,8 +74,9 @@ def _main(
         iter_ext=False,
         data_dir=f"{omegaqe.DATA_DIR}",
         cosmology=dm.cosmo,
-        C_k2k2_spline=clk2k2_spline,
+        C_k2k2_spline=None,
     )
+    clk2k2_spline = InterpolatedUnivariateSpline(Ls, clk2k2, )
     if mag_bias != 0:
         mpi.output(f"Setting up magbias {mag_bias}", my_rank, _id)
         fish.covariance.mag_bias = True
@@ -138,7 +138,6 @@ def _main(
         Lmin=Lcut_min,
         Lmax=Lcut_max,
         mag_bias=fish.covariance.mag_bias,
-        omega=False,
         kappa_typ=kappa_typ,
     )
     # _, F_L = fish.get_F_L(typ, Ls_samp[my_start: my_end], dL2=dL2, Ntheta=Ntheta, nu=nu, return_C_inv=False, gal_distro="agora", use_cache=True, Lmin=Lcut_min, Lmax=Lcut_max)
@@ -190,7 +189,7 @@ if __name__ == "__main__":
     config.read(args.config)
     section = "F_L_mpi"
     if not config.has_section(section):
-        raise ValueError(f"Config file {args.path} does not contain section '{section}'")
+        raise ValueError(f"Config file {args.config} does not contain section '{section}'")
     _main(
         config.get(section, "typ"),
         config.get(section, "exp"),

@@ -273,11 +273,11 @@ class Covariance:
         cl = self._get_Cl(typ, ellmax, nu, gal_bins, gal_distro=gal_distro)
         if noise:
             return cl + N
-        return cl
+        return csl
 
     def _get_Cov_mat(
         self,
-        typs,
+        typss,
         ellmax,
         nu=353e9,
         gal_bins=(None, None, None, None),
@@ -326,7 +326,7 @@ class Covariance:
             C_inv = C_sym.inv()
         C_inv_func = lambdify(args_no_fI, C_inv)
         Covs = [
-            self._get_Cov(arg, Lmax, nu, gal_bins, gal_distro=gal_distro) for arg in args
+            self._get_Cov(arg, Lmax, nu, gal_bins, gal_distro=gal_distro, noise=True) for arg in args
         ]
         return C_inv_func(*Covs)
 

@@ -991,12 +991,10 @@ class Fisher:
         C_inv,
         nu,
         gal_bins,
-        C_omega_spline,
         gal_distro,
         Lmin,
         Lmax,
         mag_bias,
-        omega,
         kappa_typ,
     ):
         if Lmax is None:
@@ -1010,7 +1008,7 @@ class Fisher:
         Ls2 = np.arange(Lmin, Lmax + dL2, dL2)
         if any([np.isin(typ_i, self.covariance.test_types) for typ_i in typ[4:]]):
             typ = "opt_kkkk"  # if any test types are detected, it is assumed all observables are kappa
-        sec_var = "w" if omega else "k"
+        sec_var = "k"
         if kappa_typ.lower() == "total":
             bi2_include_lss = True
             bi2_include_ld = True
@@ -1084,7 +1082,6 @@ class Fisher:
                     bi2 += self.additional_mu_bispectra(
                         bi_typ2,
                         L1,
-                        L2,
                         theta=thetas12,
                         M_spline=True,
                         nu=nu,
@@ -1096,8 +1093,8 @@ class Fisher:
                 C1[L1 < Lmin] = 0
                 covs = C1 * C2_spline(L2)
                 I_tmp[jjj] = 2 * np.sum(L2 * dTheta * bi1 * bi2 * covs)
-            F_L[iii] = InterpolatedUnivariateSpline(Ls2, I_tmp).integral(Lmin, Lmax) / 2
-        F_L *= 1 / ((2 * np.pi) ** 2)
+            F_L[iii] = InterpolatedUnivariateSpline(Ls2, I_tmp).integral(Lmin, Lmax)
+        F_L *= 1 / ((2 * np.pi) ** 2)  
         return F_L
 
     def _get_F_L(
@@ -1114,7 +1111,6 @@ class Fisher:
         Lmin,
         Lmax,
         mag_bias,
-        omega,
         kappa_typ,
     ):
         typs = np.char.array(typs)
@@ -1122,18 +1118,9 @@ class Fisher:
             self.covariance.mag_bias = True
         if use_cache:
             C_inv = self.C_inv
-            C_omega_spline = self.C_omega_spline if omega else None
         else:
             C_inv = self.covariance.get_C_inv(
                 typs, 5000, nu, gal_bins, gal_distro=gal_distro
-            )
-            omega_ells = np.geomspace(
-                int(np.floor(np.min(Ls))), int(np.ceil(np.max(Ls))), 100
-            )
-            if omega:
-                C_omega = pb.omega_ps(omega_ells)
-            C_omega_spline = (
-                InterpolatedUnivariateSpline(omega_ells, C_omega) if omega else None
             )
         all_combos = typs[:, None] + typs[None, :]
         combos = all_combos.flatten()
@@ -1152,17 +1139,15 @@ class Fisher:
                     C_inv,
                     nu,
                     gal_bins,
-                    C_omega_spline,
                     gal_distro,
                     Lmin,
                     Lmax,
                     mag_bias,
-                    omega,
                     kappa_typ,
                 )
                 if combos[iii] != combos[jjj]:
                     factor = 2  # This only works if both bispectra are the same (so not true for mag bias or pB-kappa)
-                    if mag_bias or (not omega and kappa_typ.lower() == "pb_1perm"):
+                    if mag_bias or (kappa_typ.lower() == "pb_1perm"):
                         typ2 = "opt_" + combos[jjj] + combos[iii]
                         F_L_tmp += self._get_F_L_element_sample(
                             typs,
@@ -1173,12 +1158,10 @@ class Fisher:
                             C_inv,
                             nu,
                             gal_bins,
-                            C_omega_spline,
                             gal_distro,
                             Lmin,
                             Lmax,
                             mag_bias,
-                            omega,
                             kappa_typ,
                         )
                         factor = 1
@@ -1186,8 +1169,7 @@ class Fisher:
                     factor = 1
                 perms += factor
                 F_L += factor * F_L_tmp
-        if not omega:
-            F_L /= self.C_k2k2_spline(Ls)
+        # F_L /= (2*self.C_k2k2_spline(Ls))
         # if perms != np.size(typs) ** 4:
         #     raise ValueError(f"{perms} permutations computed, should be {np.size(typs) ** 4}")
         if return_C_inv:
@@ -1349,7 +1331,6 @@ class Fisher:
         Lmin=None,
         Lmax=None,
         mag_bias=False,
-        omega=True,
         kappa_typ="pb_only",
     ):
         """
@@ -1379,7 +1360,6 @@ class Fisher:
             Lmin,
             Lmax,
             mag_bias,
-            omega,
             kappa_typ,
         )
 
