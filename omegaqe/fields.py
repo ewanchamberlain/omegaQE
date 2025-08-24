@@ -251,7 +251,9 @@ class Fields:
     def _get_N(self, field):
         kmax = 5000
         if field == "k":
-            return self.covariance.noise.get_N0("kappa", ellmax=kmax, recalc_N0=False)
+            return self.covariance.noise.get_N0(
+                "kappa", ellmax=kmax, recalc_N0=False, exp=self.exp
+            )
         if field == "g":
             return self.covariance.noise.get_gal_shot_N(ellmax=kmax)
         if field == "I":
@@ -490,12 +492,14 @@ class Fields:
         diffMaps=False,
         diffMaps_offset=1,
         typ="pB",
+        Lmin=30,
+        Lmax=3000,
     ):
         if self.template is None or reinitialise:
             self.template = Template(
                 self,
-                Lmin=30,
-                Lmax=3000,
+                Lmin=Lmin,
+                Lmax=Lmax,
                 F_L_spline=F_L_spline,
                 C_inv_spline=C_inv_spline,
                 tracer_noise=tracer_noise,

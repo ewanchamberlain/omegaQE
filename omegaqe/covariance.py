@@ -222,6 +222,7 @@ class Covariance:
         use_bins=False,
         gal_distro="LSST_gold",
         noise=True,
+        exp=None
     ):
         if typ[0] != typ[1]:
             if typ[0] in self.test_types and typ[1] in self.test_types:
@@ -230,7 +231,7 @@ class Covariance:
                 typ, ellmax, nu, gal_bins, use_bins, gal_distro=gal_distro
             )
         if typ[0] == "k":
-            N = self.noise.get_N0("kappa", ellmax)
+            N = self.noise.get_N0("kappa", ellmax, exp=exp)
         elif typ[0] in self.test_types:
             print("test")
             N = 2 * self.noise.get_N0("kappa", ellmax)
@@ -539,6 +540,7 @@ class Covariance:
         use_bins=False,
         gal_distro="LSST_gold",
         noise=True,
+        exp=None
     ):
         """
 
@@ -555,7 +557,7 @@ class Covariance:
 
         """
         return self._get_Cov(
-            typ, ellmax, nu, gal_bins, use_bins, gal_distro=gal_distro, noise=noise
+            typ, ellmax, nu, gal_bins, use_bins, gal_distro=gal_distro, noise=noise, exp=exp
         )
 
     def get_Cov_mat(

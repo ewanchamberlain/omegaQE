@@ -1,9 +1,12 @@
 import numpy as np
+from scipy.interpolate import make_interp_spline
 
 import omegaqe
+from omegaqe import DATA_DIR
 from omegaqe.cosmology import Cosmology
 from omegaqe.tools import getFileSep
 import pandas as pd
+import warnings
 
 
 class Noise:
@@ -46,8 +49,16 @@ class Noise:
             (np.zeros(self.cmb_offset), self.N0[1][: ellmax + 1 - self.cmb_offset])
         )
 
-    def _get_N0_kappa(self, ellmax):
+    def _get_N0_kappa(self, ellmax, exp):
         ells = np.arange(ellmax + 1)
+        # if exp.lower() == "act":
+        #     modes, noise = np.loadtxt(
+        #         f"{DATA_DIR}/N0/ACT/N_L_kk_act_dr6_lensing_v1_baseline.txt",
+        #         unpack=True,
+        #         usecols=[0, 1],
+        #     )
+        #     n_spline = make_interp_spline(modes[:2091], noise[:2091])
+        #     return n_spline(ells)
         fac = 0.25 * (ells * (ells + 1)) ** 2 if self.full_sky else 0.25 * (ells) ** 4
         return self._get_N0_phi(ellmax) * fac
 
@@ -91,8 +102,9 @@ class Noise:
 
     def _get_lens_rec_noise_scalings(self, exp):
         if exp.lower() == "act":
-            exp = "SO_base"
-            scaling_fac = 2.5
+            exp = "act"
+            #scaling_fac = 2.5
+            scaling_fac = 1
             return exp, scaling_fac
         if exp.lower() == "planck":
             exp = "SO_base"
@@ -121,7 +133,8 @@ class Noise:
         data_dir=omegaqe.DATA_DIR,
     ):
         print("Setting up noise...")
-        exp, scaling_fac = self._get_lens_rec_noise_scalings(exp)
+        scaling_fac = 1
+        # exp, scaling_fac = self._get_lens_rec_noise_scalings(exp)
         N0 = self._get_N0(
             exp, qe, gmv, ps, T_Lmin, T_Lmax, P_Lmin, P_Lmax, iter, iter_ext, data_dir
         )
@@ -178,7 +191,7 @@ class Noise:
         if typ == "curl":
             return self._get_N0_curl(ellmax)
         if typ == "kappa":
-            return self._get_N0_kappa(ellmax)
+            return self._get_N0_kappa(ellmax, exp)
         if typ == "omega":
             return self._get_N0_omega(ellmax)
         raise ValueError(f"Supplied type {typ} not in [phi, kappa, curl, omega].")

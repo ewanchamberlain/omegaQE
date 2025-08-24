@@ -146,7 +146,7 @@ class Fisher:
         C3_spline = N0_omega_spline
         if typ == "kkw":
             if include_N0_kappa == "both":
-                C1 = self.covariance.get_Cov("kk", Lmax)
+                C1 = self.covariance.get_Cov("kk", Lmax, exp=self.exp)
                 C2 = copy.deepcopy(C1)
             elif include_N0_kappa == "one":
                 N0_kappa = self.covariance.noise.get_N0("kappa", Lmax)
@@ -1331,7 +1331,7 @@ class Fisher:
         Lmin=None,
         Lmax=None,
         mag_bias=False,
-        kappa_typ="pb_only",
+        kappa_typ="pb_1perm",
     ):
         """
 

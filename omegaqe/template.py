@@ -280,16 +280,14 @@ class Template:
         dChi = Chis[1] - Chis[0]
         I = np.zeros((np.shape(self.L_map)), dtype="complex128")
         t0 = datetime.datetime.now()
-        print(f"[00:00] {0}%", end="")
+        print(f"[00:00] {0}%", end='')
         for Chi_i, Chi in enumerate(Chis):
             Cls = dict.fromkeys(self.fields.fields)
             windows = dict.fromkeys(self.fields.fields)
             matter_ps = self._get_matter_ps(Chi)
             for field in self.fields.fields:
                 Cls[field], windows[field] = self._get_Cl_and_window(Chi, field)
-            I_tmp = np.zeros(
-                (np.shape(self.L_map)[0], np.shape(self.L_map)[0]), dtype="complex128"
-            )
+            I_tmp = np.zeros((np.shape(self.L_map)[0], np.shape(self.L_map)[0]), dtype="float64")
             for p in range(2):
                 f_rd, g_rd = self._get_f_g_rd(p, Cls, windows, matter_ps)
                 F_rd = np.fft.irfft2(f_rd, norm=norm)
@@ -303,14 +301,11 @@ class Template:
                     if include_ll:
                         I_tmp += F_ll * G_ll
             window_k = self._get_window_k(Chi)
-            I += 2 * np.fft.rfft2(I_tmp, norm=norm) / (Chi**2) * window_k
-            print("\r", end="")
-            print(
-                f"[{str(datetime.datetime.now() - t0)[:-7]}] {int((Chi_i + 1) / Nchi * 100)}%",
-                end="",
-            )
+            I += 2 * np.fft.rfft2(I_tmp, norm=norm) / (Chi ** 2) * window_k
+            print('\r', end='')
+            print(f"[{str(datetime.datetime.now() - t0)[:-7]}] {int((Chi_i+1)/Nchi * 100)}%", end='')
         print("")
-        return -I * dChi * dL / self.F_L_spline(self.L_map) / ((2 * np.pi) ** 2)
+        return - I * dChi * dL / self.F_L_spline(self.L_map) / ((2 * np.pi) ** 2)
 
     def get_kappa_pB_Pmethod(self, Nchi=200, typ="pB"):
         include_ll = True
