@@ -1,4 +1,5 @@
 import os
+import tomllib
 from pathlib import Path
 from fullsky_sims.demnunii import Demnunii
 from fullsky_sims.agora import Agora
@@ -14,9 +15,10 @@ def wrapper_class(nbody, nthreads):
 
 ROOT_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
 HOME_DIR = Path(os.path.expanduser("~"))
-IS_ARTEMIS = os.path.exists("/its")
-DEMNUNII_DIR = (
-    Path("/research/astro/cmb/DEMNUnii")
-    if IS_ARTEMIS
-    else HOME_DIR / "Post-Born" / "data" / "mount" / "DEMNUnii" 
-)
+RESOURCE_DIR = ROOT_DIR / "resources"
+
+with open(RESOURCE_DIR / "config.toml", "rb") as f:
+    config = tomllib.load(f)
+
+DEMNUNII_DIR = Path(os.path.expanduser(config["Paths"]["demnunii_dir"]))
+CACHE_DIR = Path(os.path.expanduser(config["Paths"]["cache_dir"]))

@@ -17,9 +17,9 @@ import omegaqe
 class Demnunii:
     def __init__(self, nthreads=1):
         self.data_dir = str(fullsky_sims.DEMNUNII_DIR / "LCDM")
-        self.cache_dir = fullsky_sims.ROOT_DIR / "cache"
-
-        self.sims_dir = Path(omegaqe.DATA_DIR) / "len_cmbs" / "sims3"
+        self.cache_dir = fullsky_sims.CACHE_DIR
+        # self.sims_dir = Path(omegaqe.DATA_DIR) / "len_cmbs" / "sims3"
+        self.sims_dir = "research/astro/cmb/len_cmbs/sims3"
         self.omegaqe_data = omegaqe.DATA_DIR
         self.config = self.setup_config()
         self.nside = int(self.parse_config(self.get_config("HealpixNside")))
